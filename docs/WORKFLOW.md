@@ -1,4 +1,4 @@
-# Workflow — {{PROJECT_NAME}}
+# Workflow — Crime in Clock Tower
 
 Working process for Godot game development with **AI agent + dev + human tester**.
 All state lives in committed files → any AI/dev/tester can resume.

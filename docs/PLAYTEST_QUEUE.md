@@ -1,4 +1,4 @@
-# Playtest Queue — {{PROJECT_NAME}}
+# Playtest Queue — Crime in Clock Tower
 
 > Daily worklist for the **tester**. Every feature reaching `dev_done`/`playtesting`
 > gets pushed here by the agent.

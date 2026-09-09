@@ -1,4 +1,4 @@
-# ROADMAP — {{PROJECT_NAME}}
+# ROADMAP — Crime in Clock Tower
 
 > The game's overall plan. The agent/dev updates feature status here.
 > Detailed source of truth lives in `docs/features/F-xxx.md` (this file is just the big map).
@@ -6,7 +6,7 @@
 
 ## Game (not finalized)
 
-- **Name:** {{PROJECT_NAME}}
+- **Name:** Crime in Clock Tower
 - **Description (1 line):** _<fill in: genre, core feeling>_
 - **Engine:** Godot 4.7 (per MCP)
 - **Target platform:** _<PC / web / mobile>_

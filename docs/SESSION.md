@@ -3,7 +3,7 @@
 # Rule: every field is a "logged fact". A resuming agent/dev can ONLY read
 # from here — never keep state in the conversation (model-visible ⟺ logged).
 # Full schema: docs/WORKFLOW.md §"State discipline".
-last_updated: "{{DATE}}"
+last_updated: "2026-09-09"
 phase: planned                 # planned | dev | paused | done
 branch: main
 handoff_kind: planned-next     # planned-next = just continue | pause = wait for a human decision
@@ -22,7 +22,7 @@ decisions_pending:
   - "Game description + milestone M0 not finalized yet (see docs/ROADMAP.md)"
 ---
 
-# Session state — {{PROJECT_NAME}}
+# Session state — Crime in Clock Tower
 
 > **Read this file first.** This is the resume entry point for any AI/dev entering a session.
 > Full workflow: `docs/WORKFLOW.md`.
