@@ -19,7 +19,7 @@
 
 | ID | Name | Branch | Checklist | How to run | Result |
 |---|---|---|---|---|---|
-| _<F-xxx>_ | _<name>_ | _feat/F-xxx-slug_ | _see F-xxx.md_ | _<how to run>_ | _pending_ |
+| F-001 | Wooden mannequin isometric room movement | feat/F-001-mannequin-isometric-room | see F-001.md | `git switch feat/F-001-mannequin-isometric-room` → open project in Godot → run main scene (F5) | pending |
 
 _(Empty = no feature is ready for testing yet.)_
 
