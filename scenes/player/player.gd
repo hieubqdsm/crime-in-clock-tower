@@ -20,6 +20,7 @@ const METERS_PER_ANIM_CYCLE := 0.72
 @onready var _anim: AnimationPlayer = $Mannequin/AnimationPlayer
 
 var _was_moving := false
+var _web_frame := 0
 
 
 func _physics_process(delta: float) -> void:
@@ -35,6 +36,19 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 
 	_update_visuals(dir)
+	_web_frame += 1
+	if _web_frame % 10 == 0:
+		_push_web_state()
+
+
+func _push_web_state() -> void:
+	## Test telemetry for the browser build (web + Playwright smoke test).
+	## No-op outside the web platform; see docs/features/F-001.md.
+	if not OS.has_feature("web"):
+		return
+	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s}"
+		% [global_position.x, global_position.y, global_position.z,
+			velocity.x, velocity.z, str(_was_moving), JSON.stringify(_anim.current_animation)])
 
 
 func _floor_direction(input: Vector2) -> Vector3:

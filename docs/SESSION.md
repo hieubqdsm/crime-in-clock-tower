@@ -20,8 +20,9 @@ done:
   - "Wooden mannequin glb built headless in Blender 5.2.1, generator committed at tools/blender/make_mannequin.py, asset at assets/models/mannequin.glb (in-place Walk_loop clip, 10 channels, verified via glb_probe) (commit c57cd97)"
   - "Scenes: scenes/player/Player.tscn (+player.gd), scenes/room/Room.tscn, scenes/main/Main.tscn (isometric ortho camera 35.264°/45°, sun + world env) (commit c57cd97)"
   - "Auto-test tests/test_movement.tscn: 9/9 PASS exit 0 — camera-relative movement, speed, model facing, walk anim play/stop, wall blocking; scene smoke tests 0 errors (commit c57cd97)"
+  - "WEB smoke test: export preset 'Web Smoke Test' (nothreads) exported to build/web/, served on :8741, driven via browser-use skill in the in-app browser — 5/5 PASS (real render verified visually, W-key movement 2.24 m, screenshot docs/evidence/f001-web-smoke.png); procedure + gotchas recorded in docs/features/F-001.md §Automated testing"
   - "F-001 → dev_done, auto_test: pass; pushed to docs/PLAYTEST_QUEUE.md"
-  - "docs/LOCAL.md written: godot_exe + blender_exe paths (gitignored)"
+  - "docs/LOCAL.md written: godot_exe + blender_exe + export_templates + node/python (gitignored)"
 
 # Blockers — each line: '<what> (→ <condition to clear>)'. Empty = not stuck.
 blockers: []
@@ -50,5 +51,15 @@ decisions_pending: []
   - Godot's glTF importer strips the `_loop` suffix from clip names and enables
     looping: authored "Walk_loop" → plays as "Walk".
   - `Input.get_vector(nx, px, ny, py)`: up-screen must be the POSITIVE y arg.
+  - `JavaScriptBridge.available` does not exist in Godot 4.7 — guard web-only
+    code with `OS.has_feature("web")` alone.
+  - Godot web input: keyboard events must be dispatched on the CANVAS element
+    (document/window dispatch is ignored), and the webview needs one REAL click
+    first or `document.hasFocus()` stays false and ALL keys are dropped.
+  - `--export-release` fails if the output folder doesn't exist — mkdir first.
+- Live web build for the tester: `python -m http.server 8741 --directory build/web`
+  (may still be running) → http://127.0.0.1:8741 — the game tab was left open in
+  the ZCode in-app browser (marked deliverable). Rebuild with
+  `godot --headless --path . --export-release "Web Smoke Test"`.
 - The mannequin model is intentionally stiff/toy-like (artist figure); visual
   polish (arm swing readability) can iterate after playtest feedback.
