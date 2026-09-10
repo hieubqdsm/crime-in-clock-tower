@@ -4,19 +4,24 @@ extends CanvasLayer
 ## connect button. While typing in the URL field the local player ignores
 ## movement keys (player.gd checks for a focused LineEdit).
 
-signal connect_requested(url: String)
+signal connect_requested(url: String, player_name: String)
 
 const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
                                              # resolve ::1 while the room
                                              # server binds IPv4 only
 
 @onready var _url_edit: LineEdit = $Panel/VBox/UrlEdit
+@onready var _name_edit: LineEdit = $Panel/VBox/NameEdit
 @onready var _status: Label = $Panel/VBox/Status
 
 
 func _ready() -> void:
 	hide()
 	_url_edit.text = DEFAULT_URL
+
+
+func set_known_name(name: String) -> void:
+	_name_edit.text = name
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -42,5 +47,5 @@ func set_status(text: String, ok: bool) -> void:
 
 
 func _on_connect_pressed() -> void:
-	connect_requested.emit(_url_edit.text.strip_edges())
+	connect_requested.emit(_url_edit.text.strip_edges(), _name_edit.text)
 	set_status("đang kết nối…", false)

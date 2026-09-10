@@ -15,6 +15,8 @@ var _remote_players := {}
 
 
 func _ready() -> void:
+	_options.set_known_name(_net.player_name)
+	_set_own_name(_net.player_name)
 	_net.state_changed.connect(_on_net_state)
 	_net.player_state.connect(_on_player_state)
 	_net.player_left.connect(_on_player_left)
@@ -37,7 +39,9 @@ func _process(_delta: float) -> void:
 				btn_rect.size.x, btn_rect.size.y])
 
 
-func _on_connect_requested(url: String) -> void:
+func _on_connect_requested(url: String, player_name: String) -> void:
+	_net.apply_name(player_name)
+	_set_own_name(_net.player_name)
 	_net.connect_to(url)
 
 
@@ -49,13 +53,18 @@ func _on_net_state(ok: bool, detail: String) -> void:
 		_remote_players.clear()
 
 
-func _on_player_state(id: String, x: float, z: float, ry: float, moving: bool) -> void:
+func _set_own_name(name: String) -> void:
+	(_player.get_node("NameLabel") as Label3D).text = name
+
+
+func _on_player_state(id: String, pname: String, x: float, z: float, ry: float, moving: bool) -> void:
 	if not _remote_players.has(id):
 		var rp := REMOTE_SCENE.instantiate()
-		rp.setup("P-" + id.substr(0, 4))
+		rp.setup(pname)
 		_remotes.add_child(rp)
 		_remote_players[id] = rp
 	_remote_players[id].apply_state(x, z, ry, moving)
+	(_remote_players[id].get_node("NameLabel") as Label3D).text = pname
 
 
 func _on_player_left(id: String) -> void:

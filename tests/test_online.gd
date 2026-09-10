@@ -41,7 +41,10 @@ func _run() -> void:
 	b.player_id = "bbbb333344445555"
 
 	var saw_b := {}
-	a.player_state.connect(func(id, x, z, ry, moving): saw_b[id] = Vector3(x, 0, z))
+	var saw_name := {"n": ""}   # dict again: lambdas capture by value
+	a.player_state.connect(func(id, pname, x, z, ry, moving):
+		saw_b[id] = Vector3(x, 0, z)
+		saw_name["n"] = pname)
 
 	a.connect_to(URL)
 	b.connect_to(URL)
@@ -50,12 +53,14 @@ func _run() -> void:
 		return
 	_check(true, "both clients connect to the spawned server")
 
+	b.apply_name("Boba Fett")
 	b.set_own_state(2.0, -3.0, 1.25, true)
 	var target := Vector3(2, 0, -3)
 	if not await _wait_for(func(): return (saw_b.get("bbbb333344445555", Vector3(1e9, 0, 0)) as Vector3).distance_to(target) < 0.05, 4.0):
 		_check(false, "client A receives B's state through the server")
 		return
 	_check(true, "state coordinates survive the round trip")
+	_check(saw_name["n"] == "Boba Fett", "display name propagates ('%s')" % saw_name["n"])
 
 	# Same-browser second tab: same id as A, newer connection takes over.
 	var takeover := {"detail": ""}   # dict: lambdas capture by VALUE, so a

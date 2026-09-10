@@ -18,6 +18,10 @@ func setup(display_name: String) -> void:
 	_label.text = display_name
 
 
+func set_display_name(display_name: String) -> void:
+	_label.text = display_name
+
+
 func apply_state(x: float, z: float, ry: float, moving: bool) -> void:
 	if not _seen:
 		_seen = true

@@ -13,7 +13,7 @@ const DEFAULT_URL := "ws://127.0.0.1:8765"   # localhost may resolve ::1 in
                                              # browsers; server binds IPv4
 const SEND_HZ := 12.0
 
-signal player_state(id: String, x: float, z: float, ry: float, moving: bool)
+signal player_state(id: String, name: String, x: float, z: float, ry: float, moving: bool)
 signal player_left(id: String)
 
 var player_id := ""
@@ -27,7 +27,32 @@ var _own_state := {}
 
 func _ready() -> void:
 	player_id = _load_identity()
-	player_name = "P-" + player_id.substr(0, 4)
+	player_name = _load_name()
+	if player_name.is_empty():
+		player_name = "P-" + player_id.substr(0, 4)
+
+
+func apply_name(new_name: String) -> void:
+	"""Set + persist the display name (per browser, like the identity)."""
+	new_name = new_name.strip_edges().substr(0, 16)
+	player_name = new_name if not new_name.is_empty() else "P-" + player_id.substr(0, 4)
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("localStorage.setItem('cit_player_name'," + JSON.stringify(player_name) + ")")
+	else:
+		var f := FileAccess.open("user://player_name.txt", FileAccess.WRITE)
+		if f != null:
+			f.store_string(player_name)
+
+
+func _load_name() -> String:
+	if OS.has_feature("web"):
+		var n = JavaScriptBridge.eval("localStorage.getItem('cit_player_name') || ''")
+		if n is String:
+			return String(n)
+	var path := "user://player_name.txt"
+	if FileAccess.file_exists(path):
+		return FileAccess.get_file_as_string(path).strip_edges()
+	return ""
 
 
 func connect_to(url: String) -> void:
@@ -87,7 +112,8 @@ func _handle(msg: Dictionary) -> void:
 		"world":
 			for p in msg.get("players", []):
 				if String(p.get("id", "")) != player_id:
-					player_state.emit(String(p["id"]), float(p["x"]), float(p["z"]),
+					player_state.emit(String(p["id"]), String(p.get("name", "?")),
+						float(p["x"]), float(p["z"]),
 						float(p["ry"]), bool(p["moving"]))
 		"bye":
 			player_left.emit(String(msg.get("id", "")))
