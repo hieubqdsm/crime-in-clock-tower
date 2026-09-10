@@ -62,15 +62,18 @@ CHEST_SWAY_RUN = math.radians(4)
 BOB_RUN = 0.03
 DROP_RUN = LEG_LEN * (1 - math.cos(A_LEG_RUN))
 
-# Sprint clip (Ctrl): a true run — short cycle, deep knee drive, strong
-# forward lean, arms pumping, and a flight phase (root rises while the legs
-# pass). Stride = 2 * 2 * LEG_LEN * sin(36°) = 1.93 m per 10/24 s -> 4.63 m/s.
+# Sprint clip (Ctrl): a true run. Sign convention: the chest points UP (+Z),
+# so POSITIVE rotation_euler.x tips it FORWARD (-Y) — negative arches it back
+# (the belly-out strut used by Run, which the tester chose to keep on Shift).
+# Stride = 2 * 2 * LEG_LEN * sin(36°) = 1.93 m per 10/24 s -> 4.63 m/s.
 SPRINT_CYCLE = 10             # frames per sprint cycle (~0.42 s at 24 fps)
 A_LEG_SPRINT = math.radians(36)
-A_ARM_SPRINT = math.radians(48)
+A_ARM_SPRINT = math.radians(55)   # big swing, biased backward -> arms drive
+ARM_BIAS_SPRINT = math.radians(20)  # range: 35° fwd .. 75° back, alternating
 BEND_KNEE_SPRINT = math.radians(70)
 BEND_ELBOW_SPRINT = math.radians(62)
-CHEST_LEAN_SPRINT = math.radians(-14)
+CHEST_LEAN_SPRINT = math.radians(14)  # POSITIVE = true forward lean (chest)
+NECK_PITCH_SPRINT = math.radians(8)   # head tucked forward, sprinter tuck
 CHEST_SWAY_SPRINT = math.radians(5)
 BOB_SPRINT = 0.05             # rise at the passing pose = airborne look
 DROP_SPRINT = LEG_LEN * (1 - math.cos(A_LEG_SPRINT))
@@ -191,10 +194,10 @@ report("built: %d objects, hip z=%.2f, head top z≈%.2f"
        % (len(scene.objects), HIP_Z, WAIST_Z + 0.60 + 0.118))
 
 # ----------------------------- animation ------------------------------------
-# Two shared slotted actions (one slot per object, pitfalls §2): Walk_loop and
-# Idle_loop. In-place: only limbs move + a tiny root bob. Each action is later
-# pushed onto per-object NLA tracks so the glTF exporter emits both clips.
-animated = [root, chest]
+# Shared slotted actions (one slot per object, pitfalls §2): every clip keys
+# every animated node (Idle zeroes them all), so crossfades drive every joint.
+# Neck is animated for the sprinter head-tuck (0 elsewhere).
+animated = [root, chest, neck]
 for side in ("L", "R"):
     animated += [arms[side][0], arms[side][1], legs[side][0], legs[side][1]]
 
@@ -304,9 +307,9 @@ for f in range(1, END + 2):
 linearize()
 report("Idle_loop: %d frames keyed (rest + breathing)" % (END + 1))
 
-# -- Run -----------------------------------------------------------------------
-# Half-second cycle, wider stride, arms pumping, torso leaning forward.
-# Same knee-invariant rules as the walk (backward fold only, smoothstep).
+# -- Run (fast walk, Shift) ------------------------------------------------------
+# Half-second cycle, wider stride, arms pumping. The -9° chest angle is a
+# BACKWARD arch (belly-out strut) — intentional, the tester liked it for Shift.
 run_act = bpy.data.actions.new("Run_loop")
 run_slots = assign_action(run_act)
 for f in range(1, RUN_CYCLE + 2):
@@ -341,8 +344,9 @@ report("Run_loop: %d frames keyed (0.5 s cycle, lean %.0f deg)"
        % (RUN_CYCLE + 1, math.degrees(CHEST_LEAN_RUN)))
 
 # -- Sprint (true run, Ctrl) ---------------------------------------------------
-# Short cycle, deep knee drive, strong forward lean, bigger vertical bob so
-# the passing pose reads airborne (flight phase). Same knee invariants.
+# Short cycle, deep knee drive, TRUE forward chest lean (positive x — see the
+# sign note above), head tucked, arms driving alternately well past the torso,
+# bigger vertical bob so the passing pose reads airborne (flight phase).
 sprint_act = bpy.data.actions.new("Sprint_loop")
 sprint_slots = assign_action(sprint_act)
 for f in range(1, SPRINT_CYCLE + 2):
@@ -354,8 +358,12 @@ for f in range(1, SPRINT_CYCLE + 2):
         thigh.rotation_euler.x = s * A_LEG_SPRINT * sin_ph
         shin.rotation_euler.x = BEND_KNEE_SPRINT * smoothstep(-s * math.cos(ph))
         upper, fore = arms[side]
-        upper.rotation_euler.x = -s * A_ARM_SPRINT * sin_ph
+        # Arms swing alternately, biased backward (positive = behind the torso
+        # for a hanging limb): -35° front .. +75° back around a +20° bias.
+        upper.rotation_euler.x = (ARM_BIAS_SPRINT
+                                  - s * A_ARM_SPRINT * sin_ph)
         fore.rotation_euler.x = -BEND_ELBOW_SPRINT - s * 0.3 * A_ARM_SPRINT * (-sin_ph)
+    neck.rotation_euler.x = NECK_PITCH_SPRINT
     chest.rotation_euler.x = CHEST_LEAN_SPRINT + CHEST_SWAY_SPRINT * sin_ph
     root.location.z = (BOB_SPRINT * (0.5 + 0.5 * math.cos(2 * ph))
                        - DROP_SPRINT * (0.5 - 0.5 * math.cos(2 * ph)))

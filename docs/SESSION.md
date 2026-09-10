@@ -14,6 +14,12 @@ next_action: "F-001 is dev_done + auto_test pass and sits in docs/PLAYTEST_QUEUE
 # Evidence — work DONE in this session, with proof (commit/file).
 # No evidence = considered not done. (Ralph-handoff: evidence field)
 done:
+  - "Sprint pose fixed (chat 2026-09-10): the lean sign was INVERTED for
+    up-pointing bones (+x = forward for the chest; legs are the opposite) —
+    sprint now +14° forward chest lean + 8° head tuck (neck animated, clips
+    11 ch) + arms biased back (alternating full back-swing). Run unchanged
+    (intentional belly-out on Shift). Headless 17/17; web re-verified
+    (docs/evidence/f001-web-smoke-sprint-v2.png)"
   - "True sprint + expansion (chat 2026-09-10): Shift kept = fast walk (old clip
     kept per tester), Ctrl = new Sprint_loop true run (4.63 m/s, 70° knee drive,
     forward lean, flight bob); FSM 4 states; room 24x24 m; camera_follow.gd
@@ -86,6 +92,11 @@ decisions_pending: []
   - Per-leg asymmetric clamps (knee bend): clamp the phase weight BEFORE
     applying the leg sign, never after — the old `s * BEND * max(0, -s*cos)`
     folded one knee the wrong way (worst in the rest pose).
+  - Rotation sign convention flips with bone direction: positive x-rotation
+    swings a DOWN-hanging limb backward, but tips an UP-pointing bone (chest)
+    FORWARD. The "forward lean" was authored negative = backward arch —
+    that's where the belly-out strut look came from (kept intentionally for
+    the Run/Shift clip).
 - Live web build for the tester: `python -m http.server 8741 --directory build/web`
   (may still be running) → http://127.0.0.1:8741 — the game tab was left open in
   the ZCode in-app browser (marked deliverable). Rebuild with
