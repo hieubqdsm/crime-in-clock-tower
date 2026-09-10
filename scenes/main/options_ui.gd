@@ -12,6 +12,7 @@ const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
 
 @onready var _url_edit: LineEdit = $Panel/VBox/UrlEdit
 @onready var _name_edit: LineEdit = $Panel/VBox/NameEdit
+@onready var _hint: Label = $Hint
 @onready var _status: Label = $Panel/VBox/Status
 
 
@@ -36,6 +37,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _open(v: bool) -> void:
 	visible = v
+	_hint.visible = not v
 	if not v:
 		get_viewport().gui_release_focus()
 

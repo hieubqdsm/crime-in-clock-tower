@@ -8,6 +8,15 @@ font_size = 28
 [node name="OptionsUI" type="CanvasLayer"]
 script = ExtResource("1_script")
 
+[node name="Hint" type="Label" parent="."]
+anchors_preset = 0
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 500.0
+offset_bottom = 40.0
+text = "Nhấn O — Options / tên / kết nối server"
+modulate = Color(1, 1, 1, 0.55)
+
 [node name="Panel" type="PanelContainer" parent="."]
 anchors_preset = 8
 anchor_left = 0.5
