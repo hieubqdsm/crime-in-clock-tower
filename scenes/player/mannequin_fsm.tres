@@ -1,0 +1,20 @@
+[gd_resource type="AnimationNodeStateMachine" format=3]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ute0t"]
+animation = &"Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ngjva"]
+animation = &"Walk"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_qs458"]
+xfade_time = 0.12
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ypd4k"]
+xfade_time = 0.2
+
+[resource]
+states/Idle/node = SubResource("AnimationNodeAnimation_ute0t")
+states/Idle/position = Vector2(100, 100)
+states/Walk/node = SubResource("AnimationNodeAnimation_ngjva")
+states/Walk/position = Vector2(340, 100)
+transitions = ["Idle", "Walk", SubResource("AnimationNodeStateMachineTransition_qs458"), "Walk", "Idle", SubResource("AnimationNodeStateMachineTransition_ypd4k")]

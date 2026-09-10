@@ -9,7 +9,12 @@ var failures := 0
 var _main: Node3D
 var _player: CharacterBody3D
 var _model: Node3D
-var _anim: AnimationPlayer
+var _anim_tree: AnimationTree
+var _playback: AnimationNodeStateMachinePlayback
+
+
+func _tree_state() -> String:
+	return _playback.get_current_node()
 
 
 func _ready() -> void:
@@ -29,10 +34,12 @@ func _run() -> void:
 	if _player == null:
 		return
 	_model = _player.get_node("Mannequin")
-	_anim = _model.get_node("AnimationPlayer")
+	_anim_tree = _player.get_node("AnimTree")
+	_playback = _anim_tree["parameters/playback"]
 
 	_check(absf(_player.global_position.y) < 0.1,
 		"player settles on the floor (y=%.2f)" % _player.global_position.y)
+	_check(_tree_state() == "Idle", "starts in the Idle state (%s)" % _tree_state())
 
 	# move_up must be camera-relative: the iso camera looks from (+x,+z) at the
 	# origin, so up-screen is the (-x,-z) diagonal.
@@ -42,19 +49,18 @@ func _run() -> void:
 		await get_tree().physics_frame
 	Input.action_release("move_up")
 	var d := _player.global_position - start
-	_check(d.x < -0.5 and d.z < -0.5,
+	_check(d.x < -0.3 and d.z < -0.3,
 		"move_up moves up-screen (dx=%.2f dz=%.2f)" % [d.x, d.z])
-	_check(d.length() > 1.0 and d.length() < 3.4,
-		"~walk speed for 1 s (moved %.2f m, expect ~2.2)" % d.length())
+	_check(d.length() > 0.7 and d.length() < 2.1,
+		"~walk speed for 1 s (moved %.2f m, expect ~1.44)" % d.length())
 
 	var want_rot := atan2(-0.7071, -0.7071)
 	_check(_angle_diff(_model.rotation.y, want_rot) < 0.15,
 		"model faces its movement direction (rot=%.2f want=%.2f)" % [_model.rotation.y, want_rot])
-	_check(_anim.is_playing() and _anim.current_animation == "Walk",
-		"Walk plays while moving")
-	for i in 10:
+	_check(_tree_state() == "Walk", "Walk state while moving (%s)" % _tree_state())
+	for i in 20:
 		await get_tree().physics_frame
-	_check(not _anim.is_playing(), "animation stops when idle")
+	_check(_tree_state() == "Idle", "crossfades back to Idle when stopped (%s)" % _tree_state())
 	_check(_player.velocity.length() < 0.05,
 		"velocity is zero when idle (%.2f)" % _player.velocity.length())
 

@@ -5,7 +5,8 @@ Run headless (no window):
       --factory-startup --python tools/blender/make_mannequin.py
 
 Deliverable (committed with this script):
-  assets/models/mannequin.glb   - in-place Walk_loop, faces -Y in Blender (= +Z in Godot)
+  assets/models/mannequin.glb   - in-place Walk_loop + Idle_loop (breathing),
+                                  faces -Y in Blender (= +Z in Godot)
 
 Previews (scratch, outside the repo):
   D:/GODOTPRJ/blender_out/mannequin/preview/frame_XXX.png
@@ -14,6 +15,9 @@ Design: artist's articulated wooden figure ~1.8 m tall. Beech-wood body,
 darker wood for the ball joints. Limbs hang from joint-origin pivots so the
 walk cycle rotates them around the correct point (no transform_apply — see
 skill references/blender52-pitfalls.md §1).
+Knees fold BACKWARD ONLY: the per-leg phase weight is clamped to [0,1] and
+smoothstepped before applying BEND_KNEE — never multiplied by the leg sign
+(the old form made the R knee hyperextend forward, worst in the rest pose).
 """
 import math
 import os
@@ -35,12 +39,14 @@ END = CYCLE                   # in-place loop: one cycle keyed, f=1 pose == f=25
 
 A_LEG = math.radians(26)      # thigh swing amplitude
 A_ARM = math.radians(30)      # upper-arm swing amplitude
-BEND_KNEE = math.radians(38)  # max knee bend
+BEND_KNEE = math.radians(45)  # max knee bend (smoothstep lowers the average)
 BEND_ELBOW = math.radians(18) # constant elbow bend (arms never dead straight)
 CHEST_SWAY = math.radians(3)
 BOB = 0.02                    # rise at the legs-together passing pose
 LEG_LEN = 0.82                # thigh + shin, for the contact-pose hip drop
 DROP = LEG_LEN * (1 - math.cos(A_LEG))  # hip drop when legs are split (contact)
+IDLE_SWAY = math.radians(0.8) # idle clip: faint chest breathing sway
+IDLE_BOB = 0.004              # idle clip: tiny root lift per breath
 
 
 def report(msg):
@@ -158,41 +164,12 @@ report("built: %d objects, hip z=%.2f, head top z≈%.2f"
        % (len(scene.objects), HIP_Z, WAIST_Z + 0.60 + 0.118))
 
 # ----------------------------- animation ------------------------------------
-# ONE shared slotted action so the exporter merges everything into a single
-# "Walk_loop" clip (pitfalls §2). In-place: only limbs move + a tiny root bob.
+# Two shared slotted actions (one slot per object, pitfalls §2): Walk_loop and
+# Idle_loop. In-place: only limbs move + a tiny root bob. Each action is later
+# pushed onto per-object NLA tracks so the glTF exporter emits both clips.
 animated = [root, chest]
 for side in ("L", "R"):
     animated += [arms[side][0], arms[side][1], legs[side][0], legs[side][1]]
-
-walk_act = bpy.data.actions.new("Walk_loop")
-for ob in animated:
-    ad = ob.animation_data_create()
-    ad.action = walk_act
-    ad.action_slot = walk_act.slots.new(id_type="OBJECT", name=ob.name)
-
-# Keyed every frame, first == last pose, all-LINEAR => clean glTF samplers.
-# Character faces -Y: rotation_euler.x > 0 swings a hanging limb BACKWARD (+Y).
-for f in range(1, END + 2):
-    ph = 2 * math.pi * (f - 1) / CYCLE
-    sin_ph = math.sin(ph)
-    for side in ("L", "R"):
-        s = 1.0 if side == "L" else -1.0          # legs in counter-phase
-        thigh, shin = legs[side]
-        thigh.rotation_euler.x = s * A_LEG * sin_ph
-        # Knee bend peaks mid-swing (between the two contact poses) and is zero
-        # at both contacts, so the reaching leg is straight when it lands.
-        shin.rotation_euler.x = s * BEND_KNEE * max(0.0, -s * math.cos(ph))
-        upper, fore = arms[side]
-        upper.rotation_euler.x = -s * A_ARM * sin_ph               # arms counter the legs
-        fore.rotation_euler.x = -BEND_ELBOW - s * 0.25 * A_ARM * (-sin_ph)
-    chest.rotation_euler.x = CHEST_SWAY * sin_ph
-    # Legs split (contact) at ph=pi/2, 3pi/2 -> root LOW by DROP so the planted
-    # foot reaches the floor; legs together at ph=0, pi -> root up by BOB.
-    root.location.z = (BOB * (0.5 + 0.5 * math.cos(2 * ph))
-                       - DROP * (0.5 - 0.5 * math.cos(2 * ph)))
-    for ob in animated[1:]:
-        ob.keyframe_insert("rotation_euler", frame=f)
-    root.keyframe_insert("location", frame=f)
 
 
 def action_fcurves(ob):
@@ -216,11 +193,130 @@ def action_fcurves(ob):
     return fcs
 
 
+def assign_action(act):
+    """Point every animated object at `act` (one slot each) so keyframe_insert
+    writes into it; returns {object name: its slot on this action}."""
+    slots = {}
+    for ob in animated:
+        ad = ob.animation_data_create()
+        ad.action = act
+        slot = act.slots.new(id_type="OBJECT", name=ob.name)
+        ad.action_slot = slot
+        slots[ob.name] = slot
+    return slots
+
+
+def smoothstep(x):
+    x = min(1.0, max(0.0, x))
+    return x * x * (3.0 - 2.0 * x)
+
+
+def linearize():
+    """All-LINEAR keys => clean glTF samplers (keys land every frame anyway)."""
+    for ob in animated:
+        for fc in action_fcurves(ob):
+            for kp in fc.keyframe_points:
+                kp.interpolation = "LINEAR"
+
+
+# -- Walk ------------------------------------------------------------------
+walk_act = bpy.data.actions.new("Walk_loop")
+walk_slots = assign_action(walk_act)
+# Keyed every frame, first == last pose. Character faces -Y:
+# rotation_euler.x > 0 swings a hanging limb BACKWARD (+Y).
+for f in range(1, END + 2):
+    ph = 2 * math.pi * (f - 1) / CYCLE
+    sin_ph = math.sin(ph)
+    for side in ("L", "R"):
+        s = 1.0 if side == "L" else -1.0          # legs in counter-phase
+        thigh, shin = legs[side]
+        thigh.rotation_euler.x = s * A_LEG * sin_ph
+        # Knee weight peaks mid-swing, zero at both contacts (reaching leg
+        # lands straight). Clamp BEFORE the leg sign touches it; the smoothstep
+        # makes the fold start/stop with zero velocity (no joint snap).
+        shin.rotation_euler.x = BEND_KNEE * smoothstep(-s * math.cos(ph))
+        upper, fore = arms[side]
+        upper.rotation_euler.x = -s * A_ARM * sin_ph               # arms counter the legs
+        fore.rotation_euler.x = -BEND_ELBOW - s * 0.25 * A_ARM * (-sin_ph)
+    chest.rotation_euler.x = CHEST_SWAY * sin_ph
+    # Legs split (contact) at ph=pi/2, 3pi/2 -> root LOW by DROP so the planted
+    # foot reaches the floor; legs together at ph=0, pi -> root up by BOB.
+    root.location.z = (BOB * (0.5 + 0.5 * math.cos(2 * ph))
+                       - DROP * (0.5 - 0.5 * math.cos(2 * ph)))
+    for ob in animated[1:]:
+        ob.keyframe_insert("rotation_euler", frame=f)
+    root.keyframe_insert("location", frame=f)
+linearize()
+report("Walk_loop: %d frames keyed" % (END + 1))
+
+# Knee-direction invariant: shins never rotate negative (forward fold).
+for side in ("L", "R"):
+    xs = []
+    for fc in action_fcurves(legs[side][1]):
+        if fc.data_path == "rotation_euler" and fc.array_index == 0:
+            xs += [kp.co[1] for kp in fc.keyframe_points]
+    ok = min(xs) >= -0.001
+    report("knee check Shin%s: min %+0.3f max %+0.3f rad -> %s"
+           % (side, min(xs), max(xs), "OK (backward only)" if ok else "BUG: forward fold!"))
+    assert ok, "Shin%s rotates negative — knee folds forward" % side
+
+# -- Idle --------------------------------------------------------------------
+# Rest pose + a faint breathing sway. Keys EVERY animated node (limbs at 0) so
+# crossfading Walk->Idle in Godot drives every track back to rest smoothly.
+idle_act = bpy.data.actions.new("Idle_loop")
+idle_slots = assign_action(idle_act)
+for f in range(1, END + 2):
+    ph = 2 * math.pi * (f - 1) / CYCLE
+    for ob in animated[1:]:
+        ob.rotation_euler = Vector((0.0, 0.0, 0.0))
+    chest.rotation_euler.x = IDLE_SWAY * math.sin(ph)
+    root.location.z = IDLE_BOB * (0.5 - 0.5 * math.cos(2 * ph))
+    for ob in animated[1:]:
+        ob.keyframe_insert("rotation_euler", frame=f)
+    root.keyframe_insert("location", frame=f)
+linearize()
+report("Idle_loop: %d frames keyed (rest + breathing)" % (END + 1))
+
+# -- NLA stash ---------------------------------------------------------------
+# animation_data.action holds ONE action at a time; pushing each clip onto its
+# own per-object NLA track is what makes the glTF exporter emit both clips.
+def stash_to_nla(act, slots, track_name):
+    for ob in animated:
+        track = ob.animation_data.nla_tracks.new()
+        track.name = track_name
+        strip = track.strips.new(act.name, 1, act)
+        strip.action_slot = slots[ob.name]
+
+
+stash_to_nla(walk_act, walk_slots, "WalkTrack")
+stash_to_nla(idle_act, idle_slots, "IdleTrack")
 for ob in animated:
-    for fc in action_fcurves(ob):
-        for kp in fc.keyframe_points:
-            kp.interpolation = "LINEAR"
-report("animation: %d frames keyed, 1 shared slotted action 'Walk_loop'" % (END + 1))
+    ob.animation_data.action = None  # NLA tracks are the export source now
+report("NLA: %d clips stashed (Walk_loop, Idle_loop)" % 2)
+
+# --------------------------- glTF export (main deliverable) -----------------
+# Only the mannequin exists in the scene here; previews are added after, so
+# no light/camera/ground leaks into the asset. Exported from the NLA tracks
+# (ad.action is None) so both clips come out exactly once.
+bpy.ops.export_scene.gltf(
+    filepath=GLB_OUT,
+    export_format="GLB",
+    export_animations=True,
+    export_yup=True,
+)
+report("glb: %s (%d KB)" % (GLB_OUT, os.path.getsize(GLB_OUT) // 1024))
+
+
+def apply_action(act, slots):
+    """Re-attach an authored action (reusing its slots) so scene evaluation and
+    preview renders below show its poses."""
+    for ob in animated:
+        ad = ob.animation_data
+        ad.action = act
+        ad.action_slot = slots[ob.name]
+
+
+apply_action(walk_act, walk_slots)
 
 # Numeric sanity probe at quarter-cycle (mid-stride): feet near the ground,
 # head on top, swung limbs displaced along Y. Numbers are ground truth.
@@ -231,17 +327,6 @@ for ob in (root, pelvis, chest, head, legs["L"][0], legs["L"][1], legs["R"][0],
     ys = [(ob.matrix_world @ Vector(c)).y for c in ob.bound_box]
     report("probe %-10s z %6.3f..%6.3f  y %6.3f..%6.3f" % (
         ob.name, min(zs), max(zs), min(ys), max(ys)))
-
-# --------------------------- glTF export (main deliverable) -----------------
-# Only the mannequin exists in the scene here; previews are added after, so
-# no light/camera/ground leaks into the asset.
-bpy.ops.export_scene.gltf(
-    filepath=GLB_OUT,
-    export_format="GLB",
-    export_animations=True,
-    export_yup=True,
-)
-report("glb: %s (%d KB)" % (GLB_OUT, os.path.getsize(GLB_OUT) // 1024))
 
 # ------------------------- previews (never block the glb) -------------------
 bpy.ops.mesh.primitive_plane_add(size=12, location=(0, 0, 0))
@@ -308,7 +393,7 @@ def render_frame(frame, cam, tag):
 
 scene.render.image_settings.media_type = "IMAGE"
 scene.render.image_settings.file_format = "PNG"
-for f in (1, CYCLE // 4 + 1, CYCLE // 2 + 1, 3 * CYCLE // 4 + 1):
+for f in (1, CYCLE // 4 + 1, CYCLE // 2 + 1, 3 * CYCLE // 4 + 1, CYCLE):
     scene.render.filepath = os.path.join(PREVIEW_DIR, "side_%03d.png" % f)
     render_frame(f, side_cam, "side")
 for f in (1, CYCLE // 4 + 1):
