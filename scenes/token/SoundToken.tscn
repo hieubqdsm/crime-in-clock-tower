@@ -26,9 +26,3 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
 light_color = Color(1, 0.8, 0.4, 1)
 light_energy = 1.2
 omni_range = 3.5
-
-[node name="Sound" type="AudioStreamPlayer3D" parent="."]
-attenuation_model = 1
-unit_size = 3.5
-max_distance = 9.0
-volume_db = 2.0

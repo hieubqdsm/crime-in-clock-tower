@@ -32,17 +32,19 @@ func _run() -> void:
 	for t in tokens:
 		var token := t as Node3D
 		positions[token.global_position] = true
-		var audio := token.get_node("Sound") as AudioStreamPlayer3D
-		_check(audio.stream != null, "%s has a stream" % token.name)
+		var audio := token.get_node_or_null("Sound") as AudioStreamPlayer
+		_check(audio != null and audio.stream != null, "%s has a 2D player + stream" % token.name)
 		var looping := false
 		if audio.stream is AudioStreamWAV:
 			looping = audio.stream.loop_mode == AudioStreamWAV.LOOP_FORWARD
 		elif audio.stream is AudioStreamMP3:
 			looping = audio.stream.loop
 		_check(looping, "%s stream loops" % token.name)
-		_check(audio.attenuation_model == AudioStreamPlayer3D.ATTENUATION_INVERSE_SQUARE_DISTANCE
-			and audio.max_distance > 5.0,
-			"%s distance attenuation configured" % token.name)
+		var has_panner := false
+		for i in AudioServer.get_bus_effect_count(AudioServer.get_bus_index(audio.bus)):
+			if AudioServer.get_bus_effect(AudioServer.get_bus_index(audio.bus), i) is AudioEffectPanner:
+				has_panner = true
+		_check(has_panner, "%s bus carries a panner" % token.name)
 		streams[audio.stream.resource_path] = true
 	_check(streams.size() >= 1, "tokens carry audio streams (%d)" % streams.size())
 
@@ -58,7 +60,7 @@ func _run() -> void:
 	# in _ready left every start-out-of-range token silent forever.
 	var player := main.get_node("Player") as CharacterBody3D
 	var near_token := tokens[0] as Node3D
-	var near_audio := near_token.get_node("Sound") as AudioStreamPlayer3D
+	var near_audio := near_token.get_node_or_null("Sound") as AudioStreamPlayer
 	player.global_position = near_token.global_position + Vector3(0.5, 0, 0.5)
 	player.velocity = Vector3.ZERO
 	for i in 20:

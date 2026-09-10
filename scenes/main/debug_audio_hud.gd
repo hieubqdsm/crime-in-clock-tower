@@ -27,7 +27,7 @@ func _process(_delta: float) -> void:
 		if d < nearest_d:
 			nearest_d = d
 			nearest_name = String(token.name)
-			var audio := token.get_node_or_null("Sound") as AudioStreamPlayer3D
+			var audio := token.get_node_or_null("Sound") as AudioStreamPlayer
 			nearest_playing = audio != null and audio.playing
 	var l := AudioServer.get_bus_peak_volume_left_db(0, 0)
 	var r := AudioServer.get_bus_peak_volume_right_db(0, 0)

@@ -119,7 +119,7 @@ func _push_web_state() -> void:
 		var dist := global_position.distance_to(token.global_position)
 		if dist < nearest:
 			nearest = dist
-			var audio := token.get_node_or_null("Sound") as AudioStreamPlayer3D
+			var audio := token.get_node_or_null("Sound") as AudioStreamPlayer
 			tp_playing = 1 if audio != null and audio.playing else 0
 		if dist <= 10.0:  # audible-range radius
 			in_range += 1
