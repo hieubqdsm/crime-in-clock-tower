@@ -16,7 +16,7 @@
 
 | Milestone | Goal | Status |
 |---|---|---|
-| **M0 — Vertical slice** | Wooden mannequin walks a 3D room in isometric view (player + camera + room) | in_dev |
+| **M0 — Vertical slice** | Wooden mannequin walks a 3D room in isometric view (player + camera + room) | done (F-001 shipped) |
 | **M1 — Investigation loop** | Interactable clue objects, inventory, one solvable case | planned |
 | **M2 — Clock tower floors** | Multi-room/multi-floor tower progression | planned |
 
@@ -24,7 +24,7 @@
 
 | ID | Name | Priority | Status | Auto-test | Playtest | Assigned | Branch | Depends on |
 |---|---|---|---|---|---|---|---|---|
-| F-001 | Wooden mannequin isometric room movement | P1 | pass | pass | pass | agent | feat/F-001-mannequin-isometric-room | — |
+| F-001 | Wooden mannequin isometric room movement | P1 | shipped | pass | pass | agent | feat/F-001-mannequin-isometric-room | — |
 
 _(Add a row when creating a new feature. The status/auto-test/playtest columns follow the feature file.)_
 
