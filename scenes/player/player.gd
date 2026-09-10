@@ -16,8 +16,8 @@ extends CharacterBody3D
 ## Speeds are derived from each clip's stride so the feet stay planted —
 ## see tools/blender/make_mannequin.py. Keep in sync when clips change.
 const WALK_SPEED := 1.44      # Walk_loop: 1.44 m per 1 s cycle
-const RUN_SPEED := 3.08       # Run_loop (fast walk, Shift): 1.54 m / 0.5 s
-const SPRINT_SPEED := 4.63    # Sprint_loop (true run, Ctrl): 1.93 m / 0.42 s
+const RUN_SPEED := 3.08       # Run_loop (fast walk, C): 1.54 m / 0.5 s
+const SPRINT_SPEED := 4.63    # Sprint_loop (true run, Z): 1.93 m / 0.42 s
 const ACCEL := 14.0           # m/s^2 toward the target speed
 const DECEL := 9.0            # m/s^2 toward zero when no input
 const TURN_SMOOTH := 12.0
@@ -66,7 +66,7 @@ func _physics_process(delta: float) -> void:
 
 
 func _target_speed() -> float:
-	if Input.is_action_pressed("sprint"):        # Ctrl — true sprint wins
+	if Input.is_action_pressed("sprint"):         # Z — true sprint wins
 		return sprint_speed
 	if Input.is_action_pressed("fast_walk"):     # Shift — fast walk
 		return run_speed

@@ -84,7 +84,7 @@ func _run() -> void:
 	for i in 30:
 		await get_tree().physics_frame
 	_check(absf(_blend_pos() - 1.44) < 0.35,
-		"blend eases back to walk when Shift released (bp=%.2f)" % _blend_pos())
+		"blend eases back to walk when C released (bp=%.2f)" % _blend_pos())
 
 	# True sprint (Ctrl): blend slides to Sprint, camera follows along.
 	var cam := _main.get_node("IsometricCamera") as Camera3D
