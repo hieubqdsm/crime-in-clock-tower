@@ -19,7 +19,7 @@
 
 | ID | Name | Branch | Checklist | How to run | Result |
 |---|---|---|---|---|---|
-| _(empty)_ | | | | | |
+| F-002 | Proximity sound tokens | feat/F-002-proximity-sound-tokens | see F-002.md | game tab in ZCode browser (or http://127.0.0.1:8741) — CLICK once (audio unlock), walk to each corner | pending |
 
 _(Empty = no feature is ready for testing yet.)_
 

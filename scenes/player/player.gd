@@ -111,8 +111,16 @@ func _push_web_state() -> void:
 	## No-op outside the web platform; see docs/features/F-001.md.
 	if not OS.has_feature("web"):
 		return
-	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s,bp:%.2f}"
+	var nearest := 999.0
+	var in_range := 0
+	for t in get_tree().get_nodes_in_group("sound_tokens"):
+		var token := t as Node3D
+		var dist := global_position.distance_to(token.global_position)
+		nearest = minf(nearest, dist)
+		if dist <= 10.0:  # token max_distance — audible range by proximity
+			in_range += 1
+	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s,bp:%.2f,near:%.1f,aud:%d}"
 		% [global_position.x, global_position.y, global_position.z,
 			velocity.x, velocity.z, str(_was_moving),
 			JSON.stringify(_playback.get_current_node()),
-			Vector2(velocity.x, velocity.z).length()])
+			Vector2(velocity.x, velocity.z).length(), nearest, in_range])
