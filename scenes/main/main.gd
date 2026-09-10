@@ -10,6 +10,7 @@ const REMOTE_SCENE := preload("res://scenes/net/RemotePlayer.tscn")
 @onready var _player: CharacterBody3D = $Player
 @onready var _remotes: Node3D = $Remotes
 @onready var _options: CanvasLayer = $OptionsUI
+@onready var _voice = $VoiceCapture   # untyped: signal access is dynamic
 
 var _remote_players := {}
 
@@ -20,7 +21,10 @@ func _ready() -> void:
 	_net.state_changed.connect(_on_net_state)
 	_net.player_state.connect(_on_player_state)
 	_net.player_left.connect(_on_player_left)
+	_net.voice_received.connect(_on_voice_received)
+	_voice.captured.connect(_on_voice_captured)
 	_options.connect_requested.connect(_on_connect_requested)
+	_options.mic_toggle_requested.connect(_on_mic_toggle)
 
 
 func _process(_delta: float) -> void:
@@ -61,10 +65,28 @@ func _on_player_state(id: String, pname: String, x: float, z: float, ry: float, 
 	if not _remote_players.has(id):
 		var rp := REMOTE_SCENE.instantiate()
 		rp.setup(pname)
+		rp.setup_voice()
 		_remotes.add_child(rp)
 		_remote_players[id] = rp
 	_remote_players[id].apply_state(x, z, ry, moving)
 	(_remote_players[id].get_node("NameLabel") as Label3D).text = pname
+
+
+func _on_voice_captured(pcm: PackedByteArray) -> void:
+	if _net.connected and Input.is_physical_key_pressed(KEY_V):
+		_net.send_voice(pcm)
+
+
+func _on_voice_received(id: String, pcm: PackedByteArray) -> void:
+	if _remote_players.has(id):
+		var listener := get_viewport().get_audio_listener_3d()
+		var pos := listener.global_position if listener != null else Vector3.INF
+		_remote_players[id].receive_voice(pcm, pos)
+
+
+func _on_mic_toggle() -> void:
+	var ok: bool = _voice.enable()
+	_options.set_mic_status(ok)
 
 
 func _on_player_left(id: String) -> void:

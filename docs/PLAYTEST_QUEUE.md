@@ -19,6 +19,7 @@
 
 | ID | Name | Branch | Checklist | How to run | Result |
 |---|---|---|---|---|---|
+| F-004 | Proximity voice chat | feat/F-004-proximity-voice | see F-004.md | server + tunnel, 2 browser: O → 🎤 Bật micro (Allow) → giữ V nói | pending |
 
 _(Empty = no feature is ready for testing yet.)_
 

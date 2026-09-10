@@ -11,12 +11,17 @@ state. Identity rule the game depends on:
 Run:  python tools/server/server.py        (default port 8765)
       PORT=9000 python tools/server/server.py
 
-Protocol (JSON text frames):
+Protocol:
+  TEXT frames (JSON):
   C->S {"t":"join","id":"<16 hex>","name":"P-abcd"}
   C->S {"t":"state","x":..,"z":..,"ry":..,"moving":bool}     (own avatar)
   S->C {"t":"welcome","you":<id>,"players":[{id,name}..]}
   S->C {"t":"world","players":[{"id","name","x","z","ry","moving"}..]}   (12 Hz)
   S->C {"t":"bye","id":<id>}
+
+  BINARY frames (voice, F-004):
+  C->S b"<16-byte id><int16 LE PCM chunks @16 kHz mono>"
+  S->C same frame relayed to every OTHER player (client applies distance)
 """
 import asyncio
 import json
@@ -56,6 +61,19 @@ async def broadcast(message: str, exclude=None) -> None:
         players.pop(pid, None)
 
 
+async def broadcast_bytes(frame: bytes, exclude=None) -> None:
+    dead = []
+    for pid, p in list(players.items()):
+        if pid == exclude:
+            continue
+        try:
+            await p["ws"].send(frame)
+        except websockets.ConnectionClosed:
+            dead.append(pid)
+    for pid in dead:
+        players.pop(pid, None)
+
+
 async def handle(ws) -> None:
     pid = None
     try:
@@ -84,6 +102,14 @@ async def handle(ws) -> None:
         await broadcast(world_message(), exclude=pid)
 
         async for raw_msg in ws:
+            if isinstance(raw_msg, bytes):
+                # Voice frame: b"<16-byte sender id><int16 LE PCM @16 kHz>".
+                # The server stamps the AUTHENTIC sender id (anti-spoof) and
+                # relays to everyone else — clients apply distance falloff.
+                if len(raw_msg) > 16 and pid in players:
+                    frame = pid.encode()[:16].ljust(16, b"\x00") + raw_msg[16:]
+                    await broadcast_bytes(frame, exclude=pid)
+                continue
             msg = json.loads(raw_msg)
             if msg.get("t") == "state" and pid in players:
                 p = players[pid]

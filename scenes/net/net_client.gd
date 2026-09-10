@@ -15,6 +15,7 @@ const SEND_HZ := 12.0
 
 signal player_state(id: String, name: String, x: float, z: float, ry: float, moving: bool)
 signal player_left(id: String)
+signal voice_received(id: String, pcm: PackedByteArray)
 
 var player_id := ""
 var player_name := ""
@@ -79,10 +80,16 @@ func _process(delta: float) -> void:
 				_send({"t": "join", "id": player_id, "name": player_name})
 				state_changed.emit(true, "đã kết nối — %s" % player_name)
 			while _ws.get_available_packet_count() > 0:
-				var raw := _ws.get_packet().get_string_from_utf8()
-				var msg = JSON.parse_string(raw)
-				if msg is Dictionary:
-					_handle(msg)
+				var packet := _ws.get_packet()
+				if _ws.was_string_packet():
+					var msg = JSON.parse_string(packet.get_string_from_utf8())
+					if msg is Dictionary:
+						_handle(msg)
+				else:
+					# binary voice frame: b"<16-byte sender id><int16 PCM>"
+					if packet.size() > 16:
+						var sender := packet.slice(0, 16).get_string_from_utf8().replace(String.chr(0), "")
+						voice_received.emit(sender, packet.slice(16))
 			_send_accum += delta
 			if _send_accum >= 1.0 / SEND_HZ and not _own_state.is_empty():
 				_send_accum = 0.0
@@ -105,6 +112,17 @@ func set_own_state(x: float, z: float, ry: float, moving: bool) -> void:
 
 func _send(dict: Dictionary) -> void:
 	_ws.send_text(JSON.stringify(dict))
+
+
+func send_voice(pcm: PackedByteArray) -> void:
+	# b"<own id><pcm>" — the server re-stamps the id before relaying.
+	var frame := PackedByteArray()
+	frame.append_array(player_id.to_utf8_buffer())
+	var pad := 16 - player_id.length()
+	for i in maxi(0, pad):
+		frame.append(0)
+	frame.append_array(pcm)
+	_ws.put_packet(frame)
 
 
 func _handle(msg: Dictionary) -> void:

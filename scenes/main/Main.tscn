@@ -1,4 +1,4 @@
-[gd_scene load_steps=10 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/room/Room.tscn" id="1_room"]
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2_player"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scenes/main/main.gd" id="6_main"]
 [ext_resource type="Script" path="res://scenes/net/net_client.gd" id="7_net"]
 [ext_resource type="PackedScene" path="res://scenes/main/OptionsUI.tscn" id="8_options"]
+[ext_resource type="Script" path="res://scenes/net/voice_capture.gd" id="9_voice"]
 
 [sub_resource type="Environment" id="world_env"]
 background_mode = 1
@@ -63,5 +64,8 @@ environment = SubResource("world_env")
 
 [node name="Net" type="Node" parent="."]
 script = ExtResource("7_net")
+
+[node name="VoiceCapture" type="Node" parent="."]
+script = ExtResource("9_voice")
 
 [node name="OptionsUI" parent="." instance=ExtResource("8_options")]
