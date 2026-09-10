@@ -7,9 +7,11 @@ Outputs (committed with this script):
   assets/audio/token_hum.wav       - low machine hum with vibrato
   assets/audio/token_drip.wav      - water drips in a pipe
 
-Stdlib only (wave + math). 22050 Hz mono 16-bit, peak ~0.5, seamless loops:
-every component uses whole cycles inside the loop length or fades to the
-same value it started at, so the last sample meets the first cleanly.
+Stdlib only (wave + math). 22050 Hz mono 16-bit, normalized to 0.85 peak,
+seamless loops: every component uses whole cycles inside the loop length or
+fades to the same value it started at, so the last sample meets the first
+cleanly. Looping is applied by sound_token.gd at runtime (the WAV importer
+ignores its own loop params in 4.7, incl. the RIFF smpl chunk).
 """
 import math
 import os
@@ -25,6 +27,9 @@ TAU = 2.0 * math.pi
 
 
 def write_wav(name: str, samples: list) -> None:
+    # Normalize to 0.85 peak so tokens are clearly audible in the mix.
+    peak = max(1e-9, max(abs(s) for s in samples))
+    gain = 0.85 / peak
     path = os.path.join(OUT_DIR, name)
     with wave.open(path, "w") as w:
         w.setnchannels(1)
@@ -32,7 +37,7 @@ def write_wav(name: str, samples: list) -> None:
         w.setframerate(SR)
         frames = bytearray()
         for s in samples:
-            frames += struct.pack("<h", int(max(-1.0, min(1.0, s)) * 32767.0))
+            frames += struct.pack("<h", int(max(-1.0, min(1.0, s * gain)) * 32767.0))
         w.writeframes(bytes(frames))
     print("[audio] %-22s %.2f s  %d KB" % (name, len(samples) / SR, os.path.getsize(path) // 1024))
 

@@ -117,7 +117,7 @@ func _push_web_state() -> void:
 		var token := t as Node3D
 		var dist := global_position.distance_to(token.global_position)
 		nearest = minf(nearest, dist)
-		if dist <= 10.0:  # token max_distance — audible range by proximity
+		if dist <= 10.0:  # audible-range radius
 			in_range += 1
 	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s,bp:%.2f,near:%.1f,aud:%d}"
 		% [global_position.x, global_position.y, global_position.z,

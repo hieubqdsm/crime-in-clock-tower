@@ -29,5 +29,6 @@ omni_range = 3.5
 
 [node name="Sound" type="AudioStreamPlayer3D" parent="."]
 attenuation_model = 1
-unit_size = 2.0
-max_distance = 10.0
+unit_size = 3.5
+max_distance = 9.0
+volume_db = 2.0
