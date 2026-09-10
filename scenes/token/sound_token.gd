@@ -17,8 +17,11 @@ extends Node3D
 @export var glow_color := Color(1.0, 0.8, 0.4)
 
 const FULL_RADIUS := 3.5
+const RANGE := 9.0        # beyond this the token clamps to the floor — the
+                          # room center (14.1 m from every corner) must be
+                          # silent, not a 4-source murmur (playtest feedback)
 const BASE_DB := -6.0     # tuned in playtest: +2 was too loud up close
-const FLOOR_DB := -30.0   # faint but present when far — never silent
+const FLOOR_DB := -45.0   # near-inaudible when far — still "always playing"
 
 @onready var _audio: AudioStreamPlayer = $Sound
 @onready var _glow: OmniLight3D = $Glow
@@ -53,8 +56,11 @@ func _process(_delta: float) -> void:
 	var d := 999.0
 	if listener != null:
 		d = global_position.distance_to(listener.global_position)
-	var gain := 1.0 if d <= FULL_RADIUS else (FULL_RADIUS / maxf(d, FULL_RADIUS)) ** 2
-	_audio.volume_db = maxf(FLOOR_DB, BASE_DB + linear_to_db(gain))
+	var vol := FLOOR_DB
+	if d <= RANGE:
+		var gain := 1.0 if d <= FULL_RADIUS else (FULL_RADIUS / maxf(d, FULL_RADIUS)) ** 2
+		vol = maxf(FLOOR_DB, BASE_DB + linear_to_db(gain))
+	_audio.volume_db = vol
 	# Self-heal: some drivers (e.g. headless dummy) drop a play() issued in
 	# _ready; the design is "always playing", so keep it alive.
 	if not _audio.playing:
