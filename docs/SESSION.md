@@ -59,6 +59,11 @@ decisions_pending: []
   `python -m http.server 8741 --directory build/web`.
 - Web smoke pipeline (rebuild/serve/drive browser, gameState telemetry):
   docs/features/F-001.md §"Web + browser smoke test".
+- LIVE ONLINE: https://hieubqdsm.github.io/crime-in-clock-tower/ — GitHub
+  Pages from the orphan branch `gh-pages`. Redeploy anytime with
+  `bash tools/deploy_web.sh` (rebuilds + force-pushes a single-commit
+  gh-pages; binary blobs never enter main's history). The nothreads build
+  needs no COOP/COEP headers, which is exactly why Pages works.
 - Audio on web/nothreads — hard-won rules (each one bit once):
   - ONLY raw-PCM WAV in RAM (compress/mode=0) loads safely; Disk-stream WAV,
     AudioStreamMP3, and AudioStreamPlayer3D.get_playback_position() each
