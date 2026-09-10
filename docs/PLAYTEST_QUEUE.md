@@ -19,7 +19,7 @@
 
 | ID | Name | Branch | Checklist | How to run | Result |
 |---|---|---|---|---|---|
-| F-001 | Wooden mannequin isometric room movement | feat/F-001-mannequin-isometric-room | see F-001.md | `git switch feat/F-001-mannequin-isometric-room` → open project in Godot → run main scene (F5) | pending |
+| _(empty)_ | | | | | |
 
 _(Empty = no feature is ready for testing yet.)_
 
@@ -27,4 +27,4 @@ _(Empty = no feature is ready for testing yet.)_
 
 | ID | Result | Date | Short notes |
 |---|---|---|---|
-| — | — | — | — |
+| F-001 | pass | 2026-09-10 | Move set approved in chat after 5 feedback rounds: knee fix, smoothness, Shift fast-walk, Ctrl sprint, glide stops. Merged to main. |

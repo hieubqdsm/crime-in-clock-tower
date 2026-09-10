@@ -24,7 +24,7 @@
 
 | ID | Name | Priority | Status | Auto-test | Playtest | Assigned | Branch | Depends on |
 |---|---|---|---|---|---|---|---|---|
-| F-001 | Wooden mannequin isometric room movement | P1 | dev_done | pass | pending | agent | feat/F-001-mannequin-isometric-room | — |
+| F-001 | Wooden mannequin isometric room movement | P1 | pass | pass | pass | agent | feat/F-001-mannequin-isometric-room | — |
 
 _(Add a row when creating a new feature. The status/auto-test/playtest columns follow the feature file.)_
 
