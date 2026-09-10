@@ -42,6 +42,15 @@ var _web_frame := 0
 func _ready() -> void:
 	_playback.start(IDLE_STATE)
 	_anim_tree.active = true
+	if OS.has_feature("web"):
+		# F-002 DIAGNOSTIC: quiet non-positional playback — if the Master peak
+		# rises while this is audible, the audio driver is fine and any silence
+		# is specific to 3D listeners. Remove once proximity audio is verified.
+		var diag := AudioStreamPlayer.new()
+		diag.stream = load("res://assets/audio/mashup.wav")
+		diag.volume_db = -26.0
+		add_child(diag)
+		diag.play()
 
 
 func _physics_process(delta: float) -> void:
@@ -123,8 +132,9 @@ func _push_web_state() -> void:
 			tp_playing = 1 if audio != null and audio.playing else 0
 		if dist <= 10.0:  # audible-range radius
 			in_range += 1
-	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s,bp:%.2f,near:%.1f,aud:%d,tp:%d}"
+	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s,bp:%.2f,near:%.1f,aud:%d,tp:%d,pk:%.0f}"
 		% [global_position.x, global_position.y, global_position.z,
 			velocity.x, velocity.z, str(_was_moving),
 			JSON.stringify(_playback.get_current_node()),
-			Vector2(velocity.x, velocity.z).length(), nearest, in_range, tp_playing])
+			Vector2(velocity.x, velocity.z).length(), nearest, in_range, tp_playing,
+			AudioServer.get_bus_peak_volume_left_db(0, 0)])
