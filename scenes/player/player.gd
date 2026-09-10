@@ -42,15 +42,6 @@ var _web_frame := 0
 func _ready() -> void:
 	_playback.start(IDLE_STATE)
 	_anim_tree.active = true
-	if OS.has_feature("web"):
-		# F-002 DIAGNOSTIC: quiet non-positional playback — if the Master peak
-		# rises while this is audible, the audio driver is fine and any silence
-		# is specific to 3D listeners. Remove once proximity audio is verified.
-		var diag := AudioStreamPlayer.new()
-		diag.stream = load("res://assets/audio/mashup.wav")
-		diag.volume_db = -8.0
-		add_child(diag)
-		diag.play()
 
 
 func _physics_process(delta: float) -> void:
