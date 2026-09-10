@@ -7,25 +7,36 @@ animation = &"Idle"
 animation = &"Run"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qs458"]
+animation = &"Sprint"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ypd4k"]
 animation = &"Walk"
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ypd4k"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_1foft"]
 xfade_time = 0.12
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_1foft"]
-xfade_time = 0.2
-
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_620pr"]
-xfade_time = 0.15
+xfade_time = 0.2
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_x26me"]
 xfade_time = 0.15
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ykfmb"]
+xfade_time = 0.15
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_nxt4i"]
+xfade_time = 0.12
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_a8mj7"]
+xfade_time = 0.12
 
 [resource]
 states/Idle/node = SubResource("AnimationNodeAnimation_ute0t")
 states/Idle/position = Vector2(100, 100)
 states/Run/node = SubResource("AnimationNodeAnimation_ngjva")
-states/Run/position = Vector2(540, 100)
-states/Walk/node = SubResource("AnimationNodeAnimation_qs458")
-states/Walk/position = Vector2(320, 100)
-transitions = ["Idle", "Walk", SubResource("AnimationNodeStateMachineTransition_ypd4k"), "Walk", "Idle", SubResource("AnimationNodeStateMachineTransition_1foft"), "Walk", "Run", SubResource("AnimationNodeStateMachineTransition_620pr"), "Run", "Walk", SubResource("AnimationNodeStateMachineTransition_x26me")]
+states/Run/position = Vector2(500, 100)
+states/Sprint/node = SubResource("AnimationNodeAnimation_qs458")
+states/Sprint/position = Vector2(700, 100)
+states/Walk/node = SubResource("AnimationNodeAnimation_ypd4k")
+states/Walk/position = Vector2(300, 100)
+transitions = ["Idle", "Walk", SubResource("AnimationNodeStateMachineTransition_1foft"), "Walk", "Idle", SubResource("AnimationNodeStateMachineTransition_620pr"), "Walk", "Run", SubResource("AnimationNodeStateMachineTransition_x26me"), "Run", "Walk", SubResource("AnimationNodeStateMachineTransition_ykfmb"), "Run", "Sprint", SubResource("AnimationNodeStateMachineTransition_nxt4i"), "Sprint", "Run", SubResource("AnimationNodeStateMachineTransition_a8mj7")]

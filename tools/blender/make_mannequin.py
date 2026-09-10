@@ -5,8 +5,10 @@ Run headless (no window):
       --factory-startup --python tools/blender/make_mannequin.py
 
 Deliverable (committed with this script):
-  assets/models/mannequin.glb   - in-place Walk_loop + Run_loop + Idle_loop
-                                  (breathing), faces -Y in Blender (= +Z in Godot)
+  assets/models/mannequin.glb   - in-place Walk_loop + Run_loop (fast walk,
+                                  Shift) + Sprint_loop (true run, Ctrl) +
+                                  Idle_loop (breathing), faces -Y in Blender
+                                  (= +Z in Godot)
 
 Previews (scratch, outside the repo):
   D:/GODOTPRJ/blender_out/mannequin/preview/frame_XXX.png
@@ -59,6 +61,19 @@ CHEST_LEAN_RUN = math.radians(-9)  # torso tips forward (toward -Y)
 CHEST_SWAY_RUN = math.radians(4)
 BOB_RUN = 0.03
 DROP_RUN = LEG_LEN * (1 - math.cos(A_LEG_RUN))
+
+# Sprint clip (Ctrl): a true run — short cycle, deep knee drive, strong
+# forward lean, arms pumping, and a flight phase (root rises while the legs
+# pass). Stride = 2 * 2 * LEG_LEN * sin(36°) = 1.93 m per 10/24 s -> 4.63 m/s.
+SPRINT_CYCLE = 10             # frames per sprint cycle (~0.42 s at 24 fps)
+A_LEG_SPRINT = math.radians(36)
+A_ARM_SPRINT = math.radians(48)
+BEND_KNEE_SPRINT = math.radians(70)
+BEND_ELBOW_SPRINT = math.radians(62)
+CHEST_LEAN_SPRINT = math.radians(-14)
+CHEST_SWAY_SPRINT = math.radians(5)
+BOB_SPRINT = 0.05             # rise at the passing pose = airborne look
+DROP_SPRINT = LEG_LEN * (1 - math.cos(A_LEG_SPRINT))
 
 
 def report(msg):
@@ -325,6 +340,42 @@ for side in ("L", "R"):
 report("Run_loop: %d frames keyed (0.5 s cycle, lean %.0f deg)"
        % (RUN_CYCLE + 1, math.degrees(CHEST_LEAN_RUN)))
 
+# -- Sprint (true run, Ctrl) ---------------------------------------------------
+# Short cycle, deep knee drive, strong forward lean, bigger vertical bob so
+# the passing pose reads airborne (flight phase). Same knee invariants.
+sprint_act = bpy.data.actions.new("Sprint_loop")
+sprint_slots = assign_action(sprint_act)
+for f in range(1, SPRINT_CYCLE + 2):
+    ph = 2 * math.pi * (f - 1) / SPRINT_CYCLE
+    sin_ph = math.sin(ph)
+    for side in ("L", "R"):
+        s = 1.0 if side == "L" else -1.0
+        thigh, shin = legs[side]
+        thigh.rotation_euler.x = s * A_LEG_SPRINT * sin_ph
+        shin.rotation_euler.x = BEND_KNEE_SPRINT * smoothstep(-s * math.cos(ph))
+        upper, fore = arms[side]
+        upper.rotation_euler.x = -s * A_ARM_SPRINT * sin_ph
+        fore.rotation_euler.x = -BEND_ELBOW_SPRINT - s * 0.3 * A_ARM_SPRINT * (-sin_ph)
+    chest.rotation_euler.x = CHEST_LEAN_SPRINT + CHEST_SWAY_SPRINT * sin_ph
+    root.location.z = (BOB_SPRINT * (0.5 + 0.5 * math.cos(2 * ph))
+                       - DROP_SPRINT * (0.5 - 0.5 * math.cos(2 * ph)))
+    for ob in animated[1:]:
+        ob.keyframe_insert("rotation_euler", frame=f)
+    root.keyframe_insert("location", frame=f)
+linearize()
+
+for side in ("L", "R"):
+    xs = []
+    for fc in action_fcurves(legs[side][1]):
+        if fc.data_path == "rotation_euler" and fc.array_index == 0:
+            xs += [kp.co[1] for kp in fc.keyframe_points]
+    ok = min(xs) >= -0.001
+    report("knee check Shin%s (sprint): min %+0.3f max %+0.3f rad -> %s"
+           % (side, min(xs), max(xs), "OK" if ok else "BUG: forward fold!"))
+    assert ok, "Shin%s rotates negative in sprint — knee folds forward" % side
+report("Sprint_loop: %d frames keyed (%.2f s cycle, lean %.0f deg)"
+       % (SPRINT_CYCLE + 1, SPRINT_CYCLE / 24.0, math.degrees(CHEST_LEAN_SPRINT)))
+
 # -- NLA stash ---------------------------------------------------------------
 # animation_data.action holds ONE action at a time; pushing each clip onto its
 # own per-object NLA track is what makes the glTF exporter emit both clips.
@@ -339,9 +390,10 @@ def stash_to_nla(act, slots, track_name):
 stash_to_nla(walk_act, walk_slots, "WalkTrack")
 stash_to_nla(idle_act, idle_slots, "IdleTrack")
 stash_to_nla(run_act, run_slots, "RunTrack")
+stash_to_nla(sprint_act, sprint_slots, "SprintTrack")
 for ob in animated:
     ob.animation_data.action = None  # NLA tracks are the export source now
-report("NLA: 3 clips stashed (Walk_loop, Idle_loop, Run_loop)")
+report("NLA: 4 clips stashed (Walk_loop, Idle_loop, Run_loop, Sprint_loop)")
 
 # --------------------------- glTF export (main deliverable) -----------------
 # Only the mannequin exists in the scene here; previews are added after, so
@@ -453,5 +505,10 @@ apply_action(run_act, run_slots)
 for f in (1, RUN_CYCLE // 4 + 1, RUN_CYCLE // 2 + 1):
     scene.render.filepath = os.path.join(PREVIEW_DIR, "run_%03d.png" % f)
     render_frame(f, side_cam, "run")
+
+apply_action(sprint_act, sprint_slots)
+for f in (1, SPRINT_CYCLE // 4 + 1, SPRINT_CYCLE // 2 + 1):
+    scene.render.filepath = os.path.join(PREVIEW_DIR, "sprint_%03d.png" % f)
+    render_frame(f, side_cam, "sprint")
 
 report("DONE")

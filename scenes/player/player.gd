@@ -11,19 +11,20 @@ extends CharacterBody3D
 ## mannequin_fsm.tres): Idle <-> Walk with xfade crossfades, and the model
 ## heading eases toward the movement direction (no instant snaps).
 
-## One walk cycle (1 s) covers two steps of 2 * 0.82 * sin(26°) m each
-## (= 1.44 m), per the stride math in tools/blender/make_mannequin.py —
-## keep the defaults in sync with the clips or the feet will slide.
-const WALK_SPEED := 1.44
-## Run cycle: 1.54 m per 0.5 s cycle (same math, 28° stride).
-const RUN_SPEED := 3.08
+## Speeds are derived from each clip's stride so the feet stay planted —
+## see tools/blender/make_mannequin.py. Keep in sync when clips change.
+const WALK_SPEED := 1.44      # Walk_loop: 1.44 m per 1 s cycle
+const RUN_SPEED := 3.08       # Run_loop (fast walk, Shift): 1.54 m / 0.5 s
+const SPRINT_SPEED := 4.63    # Sprint_loop (true run, Ctrl): 1.93 m / 0.42 s
 const TURN_SMOOTH := 12.0
 const IDLE_STATE := "Idle"
 const WALK_STATE := "Walk"
 const RUN_STATE := "Run"
+const SPRINT_STATE := "Sprint"
 
 @export var walk_speed := WALK_SPEED
 @export var run_speed := RUN_SPEED
+@export var sprint_speed := SPRINT_SPEED
 
 @onready var _model: Node3D = $Mannequin
 @onready var _anim_tree: AnimationTree = $AnimTree
@@ -47,7 +48,11 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity.y -= 20.0 * delta
-	var speed := run_speed if Input.is_action_pressed("sprint") else walk_speed
+	var speed := walk_speed
+	if Input.is_action_pressed("sprint"):      # Ctrl — true sprint wins
+		speed = sprint_speed
+	elif Input.is_action_pressed("fast_walk"): # Shift — fast walk
+		speed = run_speed
 	velocity.x = dir.x * speed
 	velocity.z = dir.z * speed
 	move_and_slide()
@@ -80,7 +85,11 @@ func _update_visuals(dir: Vector3, delta: float) -> void:
 		_heading = lerp_angle(_heading, atan2(dir.x, dir.z),
 			1.0 - exp(-TURN_SMOOTH * delta))
 		_model.rotation.y = _heading
-		var state := RUN_STATE if Input.is_action_pressed("sprint") else WALK_STATE
+		var state := WALK_STATE
+		if Input.is_action_pressed("sprint"):
+			state = SPRINT_STATE
+		elif Input.is_action_pressed("fast_walk"):
+			state = RUN_STATE
 		if _playback.get_current_node() != state:
 			_playback.travel(state)
 	elif _playback.get_current_node() != IDLE_STATE:

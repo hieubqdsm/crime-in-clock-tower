@@ -14,6 +14,14 @@ next_action: "F-001 is dev_done + auto_test pass and sits in docs/PLAYTEST_QUEUE
 # Evidence — work DONE in this session, with proof (commit/file).
 # No evidence = considered not done. (Ralph-handoff: evidence field)
 done:
+  - "True sprint + expansion (chat 2026-09-10): Shift kept = fast walk (old clip
+    kept per tester), Ctrl = new Sprint_loop true run (4.63 m/s, 70° knee drive,
+    forward lean, flight bob); FSM 4 states; room 24x24 m; camera_follow.gd
+    smooth follow (NodePath export — plain Node3D export doesn't auto-resolve
+    from tscn at runtime). Headless 17/17 PASS; web Ctrl sprint verified
+    (docs/evidence/f001-web-smoke-sprint.png). IAB lesson: after a failed
+    screenshot capture the tab gets rAF-throttled (game freezes) — close and
+    reopen the tab."
   - "Sprint added (chat request 2026-09-10): Run_loop clip (0.5 s cycle, stride
     math 3.08 m/s), FSM Idle/Walk/Run, sprint input action (Shift), run/walk
     speeds. Headless 14/14 PASS; web verified (Run state + speed, screenshot
