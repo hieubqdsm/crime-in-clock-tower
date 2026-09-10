@@ -13,13 +13,17 @@ extends CharacterBody3D
 
 ## One walk cycle (1 s) covers two steps of 2 * 0.82 * sin(26°) m each
 ## (= 1.44 m), per the stride math in tools/blender/make_mannequin.py —
-## keep the default in sync with the clip or the feet will slide.
+## keep the defaults in sync with the clips or the feet will slide.
 const WALK_SPEED := 1.44
+## Run cycle: 1.54 m per 0.5 s cycle (same math, 28° stride).
+const RUN_SPEED := 3.08
 const TURN_SMOOTH := 12.0
 const IDLE_STATE := "Idle"
 const WALK_STATE := "Walk"
+const RUN_STATE := "Run"
 
 @export var walk_speed := WALK_SPEED
+@export var run_speed := RUN_SPEED
 
 @onready var _model: Node3D = $Mannequin
 @onready var _anim_tree: AnimationTree = $AnimTree
@@ -43,8 +47,9 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity.y -= 20.0 * delta
-	velocity.x = dir.x * walk_speed
-	velocity.z = dir.z * walk_speed
+	var speed := run_speed if Input.is_action_pressed("sprint") else walk_speed
+	velocity.x = dir.x * speed
+	velocity.z = dir.z * speed
 	move_and_slide()
 
 	_update_visuals(dir, delta)
@@ -75,8 +80,9 @@ func _update_visuals(dir: Vector3, delta: float) -> void:
 		_heading = lerp_angle(_heading, atan2(dir.x, dir.z),
 			1.0 - exp(-TURN_SMOOTH * delta))
 		_model.rotation.y = _heading
-		if _playback.get_current_node() != WALK_STATE:
-			_playback.travel(WALK_STATE)
+		var state := RUN_STATE if Input.is_action_pressed("sprint") else WALK_STATE
+		if _playback.get_current_node() != state:
+			_playback.travel(state)
 	elif _playback.get_current_node() != IDLE_STATE:
 		_playback.travel(IDLE_STATE)
 	_was_moving = moving

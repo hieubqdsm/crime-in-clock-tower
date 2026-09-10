@@ -14,6 +14,10 @@ next_action: "F-001 is dev_done + auto_test pass and sits in docs/PLAYTEST_QUEUE
 # Evidence — work DONE in this session, with proof (commit/file).
 # No evidence = considered not done. (Ralph-handoff: evidence field)
 done:
+  - "Sprint added (chat request 2026-09-10): Run_loop clip (0.5 s cycle, stride
+    math 3.08 m/s), FSM Idle/Walk/Run, sprint input action (Shift), run/walk
+    speeds. Headless 14/14 PASS; web verified (Run state + speed, screenshot
+    docs/evidence/f001-web-smoke-run.png)"
   - "Tester feedback fixed (chat 2026-09-10): R knee folded forward (bend weight
     was sign-multiplied) — knees now backward-only with an fcurve invariant
     assert in the generator; smoothstep knee curve; Idle_loop clip added via

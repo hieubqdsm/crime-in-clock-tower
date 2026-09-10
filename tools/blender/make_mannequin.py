@@ -5,8 +5,8 @@ Run headless (no window):
       --factory-startup --python tools/blender/make_mannequin.py
 
 Deliverable (committed with this script):
-  assets/models/mannequin.glb   - in-place Walk_loop + Idle_loop (breathing),
-                                  faces -Y in Blender (= +Z in Godot)
+  assets/models/mannequin.glb   - in-place Walk_loop + Run_loop + Idle_loop
+                                  (breathing), faces -Y in Blender (= +Z in Godot)
 
 Previews (scratch, outside the repo):
   D:/GODOTPRJ/blender_out/mannequin/preview/frame_XXX.png
@@ -47,6 +47,18 @@ LEG_LEN = 0.82                # thigh + shin, for the contact-pose hip drop
 DROP = LEG_LEN * (1 - math.cos(A_LEG))  # hip drop when legs are split (contact)
 IDLE_SWAY = math.radians(0.8) # idle clip: faint chest breathing sway
 IDLE_BOB = 0.004              # idle clip: tiny root lift per breath
+
+# Run clip: half-second cycle, wider stride, forward torso lean.
+# Stride = 2 * 2 * LEG_LEN * sin(A_LEG_RUN) = 1.54 m per 0.5 s -> 3.08 m/s.
+RUN_CYCLE = 12                # frames per run cycle (0.5 s at 24 fps)
+A_LEG_RUN = math.radians(28)
+A_ARM_RUN = math.radians(40)
+BEND_KNEE_RUN = math.radians(55)
+BEND_ELBOW_RUN = math.radians(45)
+CHEST_LEAN_RUN = math.radians(-9)  # torso tips forward (toward -Y)
+CHEST_SWAY_RUN = math.radians(4)
+BOB_RUN = 0.03
+DROP_RUN = LEG_LEN * (1 - math.cos(A_LEG_RUN))
 
 
 def report(msg):
@@ -277,6 +289,42 @@ for f in range(1, END + 2):
 linearize()
 report("Idle_loop: %d frames keyed (rest + breathing)" % (END + 1))
 
+# -- Run -----------------------------------------------------------------------
+# Half-second cycle, wider stride, arms pumping, torso leaning forward.
+# Same knee-invariant rules as the walk (backward fold only, smoothstep).
+run_act = bpy.data.actions.new("Run_loop")
+run_slots = assign_action(run_act)
+for f in range(1, RUN_CYCLE + 2):
+    ph = 2 * math.pi * (f - 1) / RUN_CYCLE
+    sin_ph = math.sin(ph)
+    for side in ("L", "R"):
+        s = 1.0 if side == "L" else -1.0
+        thigh, shin = legs[side]
+        thigh.rotation_euler.x = s * A_LEG_RUN * sin_ph
+        shin.rotation_euler.x = BEND_KNEE_RUN * smoothstep(-s * math.cos(ph))
+        upper, fore = arms[side]
+        upper.rotation_euler.x = -s * A_ARM_RUN * sin_ph
+        fore.rotation_euler.x = -BEND_ELBOW_RUN - s * 0.3 * A_ARM_RUN * (-sin_ph)
+    chest.rotation_euler.x = CHEST_LEAN_RUN + CHEST_SWAY_RUN * sin_ph
+    root.location.z = (BOB_RUN * (0.5 + 0.5 * math.cos(2 * ph))
+                       - DROP_RUN * (0.5 - 0.5 * math.cos(2 * ph)))
+    for ob in animated[1:]:
+        ob.keyframe_insert("rotation_euler", frame=f)
+    root.keyframe_insert("location", frame=f)
+linearize()
+
+for side in ("L", "R"):
+    xs = []
+    for fc in action_fcurves(legs[side][1]):
+        if fc.data_path == "rotation_euler" and fc.array_index == 0:
+            xs += [kp.co[1] for kp in fc.keyframe_points]
+    ok = min(xs) >= -0.001
+    report("knee check Shin%s (run): min %+0.3f max %+0.3f rad -> %s"
+           % (side, min(xs), max(xs), "OK" if ok else "BUG: forward fold!"))
+    assert ok, "Shin%s rotates negative in run — knee folds forward" % side
+report("Run_loop: %d frames keyed (0.5 s cycle, lean %.0f deg)"
+       % (RUN_CYCLE + 1, math.degrees(CHEST_LEAN_RUN)))
+
 # -- NLA stash ---------------------------------------------------------------
 # animation_data.action holds ONE action at a time; pushing each clip onto its
 # own per-object NLA track is what makes the glTF exporter emit both clips.
@@ -290,9 +338,10 @@ def stash_to_nla(act, slots, track_name):
 
 stash_to_nla(walk_act, walk_slots, "WalkTrack")
 stash_to_nla(idle_act, idle_slots, "IdleTrack")
+stash_to_nla(run_act, run_slots, "RunTrack")
 for ob in animated:
     ob.animation_data.action = None  # NLA tracks are the export source now
-report("NLA: %d clips stashed (Walk_loop, Idle_loop)" % 2)
+report("NLA: 3 clips stashed (Walk_loop, Idle_loop, Run_loop)")
 
 # --------------------------- glTF export (main deliverable) -----------------
 # Only the mannequin exists in the scene here; previews are added after, so
@@ -399,5 +448,10 @@ for f in (1, CYCLE // 4 + 1, CYCLE // 2 + 1, 3 * CYCLE // 4 + 1, CYCLE):
 for f in (1, CYCLE // 4 + 1):
     scene.render.filepath = os.path.join(PREVIEW_DIR, "front_%03d.png" % f)
     render_frame(f, front_cam, "front")
+
+apply_action(run_act, run_slots)
+for f in (1, RUN_CYCLE // 4 + 1, RUN_CYCLE // 2 + 1):
+    scene.render.filepath = os.path.join(PREVIEW_DIR, "run_%03d.png" % f)
+    render_frame(f, side_cam, "run")
 
 report("DONE")

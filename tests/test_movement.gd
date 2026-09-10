@@ -64,6 +64,25 @@ func _run() -> void:
 	_check(_player.velocity.length() < 0.05,
 		"velocity is zero when idle (%.2f)" % _player.velocity.length())
 
+	# Sprint: Shift + move -> Run state at run speed; release Shift -> Walk.
+	var run_start := _player.global_position
+	Input.action_press("move_up")
+	Input.action_press("sprint")
+	for i in 60:
+		await get_tree().physics_frame
+	_check(_tree_state() == "Run", "Run state while sprinting (%s)" % _tree_state())
+	var run_d := _player.global_position - run_start
+	_check(run_d.length() > 2.2 and run_d.length() < 4.2,
+		"run speed for 1 s (moved %.2f m, expect ~3.08)" % run_d.length())
+	Input.action_release("sprint")
+	for i in 25:
+		await get_tree().physics_frame
+	_check(_tree_state() == "Walk", "back to Walk when Shift released (%s)" % _tree_state())
+	Input.action_release("move_up")
+	for i in 20:
+		await get_tree().physics_frame
+	_check(_tree_state() == "Idle", "back to Idle after run stop (%s)" % _tree_state())
+
 	# North wall: park just south of it and walk into it for 1.5 s.
 	_player.global_position = Vector3(0, 0.1, -5.2)
 	_player.velocity = Vector3.ZERO

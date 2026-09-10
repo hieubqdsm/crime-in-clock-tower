@@ -4,17 +4,28 @@
 animation = &"Idle"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ngjva"]
+animation = &"Run"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qs458"]
 animation = &"Walk"
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_qs458"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ypd4k"]
 xfade_time = 0.12
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ypd4k"]
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_1foft"]
 xfade_time = 0.2
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_620pr"]
+xfade_time = 0.15
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_x26me"]
+xfade_time = 0.15
 
 [resource]
 states/Idle/node = SubResource("AnimationNodeAnimation_ute0t")
 states/Idle/position = Vector2(100, 100)
-states/Walk/node = SubResource("AnimationNodeAnimation_ngjva")
-states/Walk/position = Vector2(340, 100)
-transitions = ["Idle", "Walk", SubResource("AnimationNodeStateMachineTransition_qs458"), "Walk", "Idle", SubResource("AnimationNodeStateMachineTransition_ypd4k")]
+states/Run/node = SubResource("AnimationNodeAnimation_ngjva")
+states/Run/position = Vector2(540, 100)
+states/Walk/node = SubResource("AnimationNodeAnimation_qs458")
+states/Walk/position = Vector2(320, 100)
+transitions = ["Idle", "Walk", SubResource("AnimationNodeStateMachineTransition_ypd4k"), "Walk", "Idle", SubResource("AnimationNodeStateMachineTransition_1foft"), "Walk", "Run", SubResource("AnimationNodeStateMachineTransition_620pr"), "Run", "Walk", SubResource("AnimationNodeStateMachineTransition_x26me")]
