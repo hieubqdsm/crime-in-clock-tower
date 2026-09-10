@@ -36,10 +36,14 @@ func _run() -> void:
 		_check(audio != null and audio.stream != null, "%s has a 2D player + stream" % token.name)
 		var looping := false
 		if audio.stream is AudioStreamWAV:
-			looping = audio.stream.loop_mode == AudioStreamWAV.LOOP_FORWARD
+			# THE F-002 bug: loop enabled with loop_end=0 = zero-length loop =
+			# zero samples mixed (playing=true, peak -200). Assert a REAL range.
+			looping = (audio.stream.loop_mode == AudioStreamWAV.LOOP_FORWARD
+				and audio.stream.loop_end > audio.stream.loop_begin)
 		elif audio.stream is AudioStreamMP3:
 			looping = audio.stream.loop
-		_check(looping, "%s stream loops" % token.name)
+		_check(looping, "%s stream loops over a real range (end=%d)" % [token.name,
+			(audio.stream as AudioStreamWAV).loop_end if audio.stream is AudioStreamWAV else -1])
 		_check(audio.bus == "Master", "%s sits directly on the Master bus" % token.name)
 		_check(audio.playing, "%s is playing from scene load" % token.name)
 		streams[audio.stream.resource_path] = true
