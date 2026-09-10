@@ -35,10 +35,11 @@ func _ready() -> void:
 	# a ZERO-LENGTH loop (begin=0..end=0) — the mixer emits no samples while
 	# `playing` stays true (silent on every platform, peak -200 forever).
 	if stream is AudioStreamWAV and stream.loop_mode == AudioStreamWAV.LOOP_DISABLED:
-		var frames := stream.data.size() / 2 / (2 if stream.stereo else 1)
-		stream.loop_begin = 0
-		stream.loop_end = frames - 1
-		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+		var wav := stream as AudioStreamWAV
+		var frames := wav.data.size() / 2 / (2 if wav.stereo else 1)
+		wav.loop_begin = 0
+		wav.loop_end = frames - 1
+		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	if stream is AudioStreamMP3 and not stream.loop:
 		stream.loop = true
 	_audio = AudioStreamPlayer.new()
