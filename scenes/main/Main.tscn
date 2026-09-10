@@ -1,0 +1,34 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/room/Room.tscn" id="1_room"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="2_player"]
+[ext_resource type="Script" path="res://scenes/main/camera_follow.gd" id="3_camfollow"]
+
+[sub_resource type="Environment" id="world_env"]
+background_mode = 1
+background_color = Color(0.12, 0.12, 0.15, 1)
+ambient_light_source = 2
+ambient_light_color = Color(0.55, 0.55, 0.6, 1)
+ambient_light_energy = 0.7
+
+[node name="Main" type="Node3D"]
+
+[node name="Room" parent="." instance=ExtResource("1_room")]
+
+[node name="Player" parent="." instance=ExtResource("2_player")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 3)
+
+[node name="SunLight" type="DirectionalLight3D" parent="."]
+transform = Transform3D(0.866025, 0, 0.5, 0, 0.642788, 0.766044, -0.5, -0.766044, 0.642788, 0, 6, 0)
+shadow_enabled = true
+
+[node name="IsometricCamera" type="Camera3D" parent="."]
+script = ExtResource("3_camfollow")
+target_path = NodePath("../Player")
+transform = Transform3D(0.707107, -0.408248, 0.57735, 0, 0.816477, 0.57735, -0.707107, -0.408248, 0.57735, 6.928203, 7.928203, 6.928203)
+projection = 1
+current = true
+size = 10
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("world_env")

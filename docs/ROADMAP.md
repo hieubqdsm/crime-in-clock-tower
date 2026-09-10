@@ -4,27 +4,27 @@
 > Detailed source of truth lives in `docs/features/F-xxx.md` (this file is just the big map).
 > Full workflow: `docs/WORKFLOW.md`.
 
-## Game (not finalized)
+## Game
 
 - **Name:** Crime in Clock Tower
-- **Description (1 line):** _<fill in: genre, core feeling>_
-- **Engine:** Godot 4.7 (per MCP)
-- **Target platform:** _<PC / web / mobile>_
+- **Description (1 line):** 3D isometric detective game — explore rooms, gather
+  clues, solve the murder in the clock tower. (Core feel: calm investigation.)
+- **Engine:** Godot 4.7.1 (headless-driven, MCP + CLI)
+- **Target platform:** PC
 
 ## Milestones
 
 | Milestone | Goal | Status |
 |---|---|---|
-| **M0 — Vertical slice** | Godot project init + one small playable gameplay loop | planned |
-| **M1 — _<fill in>_** | _<fill in>_ | planned |
-| **M2 — _<fill in>_** | _<fill in>_ | planned |
+| **M0 — Vertical slice** | Wooden mannequin walks a 3D room in isometric view (player + camera + room) | in_dev |
+| **M1 — Investigation loop** | Interactable clue objects, inventory, one solvable case | planned |
+| **M2 — Clock tower floors** | Multi-room/multi-floor tower progression | planned |
 
 ## Feature register
 
 | ID | Name | Priority | Status | Auto-test | Playtest | Assigned | Branch | Depends on |
 |---|---|---|---|---|---|---|---|---|
-| _<F-001>_ | _<e.g. Player movement>_ | _P1_ | _planned_ | — | — | — | — | — |
-| _<F-002>_ | _<...>_ | _P2_ | _planned_ | — | — | — | — | — |
+| F-001 | Wooden mannequin isometric room movement | P1 | pass | pass | pass | agent | feat/F-001-mannequin-isometric-room | — |
 
 _(Add a row when creating a new feature. The status/auto-test/playtest columns follow the feature file.)_
 

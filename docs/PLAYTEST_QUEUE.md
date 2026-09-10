@@ -19,7 +19,7 @@
 
 | ID | Name | Branch | Checklist | How to run | Result |
 |---|---|---|---|---|---|
-| _<F-xxx>_ | _<name>_ | _feat/F-xxx-slug_ | _see F-xxx.md_ | _<how to run>_ | _pending_ |
+| _(empty)_ | | | | | |
 
 _(Empty = no feature is ready for testing yet.)_
 
@@ -27,4 +27,4 @@ _(Empty = no feature is ready for testing yet.)_
 
 | ID | Result | Date | Short notes |
 |---|---|---|---|
-| — | — | — | — |
+| F-001 | pass | 2026-09-10 | Move set approved in chat after 5 feedback rounds: knee fix, smoothness, Shift fast-walk, Ctrl sprint, glide stops. Merged to main. |

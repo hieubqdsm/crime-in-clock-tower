@@ -1,0 +1,40 @@
+[gd_resource type="AnimationNodeStateMachine" format=3]
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ute0t"]
+animation = &"Idle"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ngjva"]
+animation = &"Walk"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qs458"]
+animation = &"Run"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ypd4k"]
+animation = &"Sprint"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_1foft"]
+min_space = 0.0
+max_space = 5.0
+sync_mode = 1
+blend_point_0/node = SubResource("AnimationNodeAnimation_ngjva")
+blend_point_0/pos = 1.44
+blend_point_0/name = &"0"
+blend_point_1/node = SubResource("AnimationNodeAnimation_qs458")
+blend_point_1/pos = 3.08
+blend_point_1/name = &"1"
+blend_point_2/node = SubResource("AnimationNodeAnimation_ypd4k")
+blend_point_2/pos = 4.63
+blend_point_2/name = &"2"
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_620pr"]
+xfade_time = 0.15
+
+[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_x26me"]
+xfade_time = 0.3
+
+[resource]
+states/Idle/node = SubResource("AnimationNodeAnimation_ute0t")
+states/Idle/position = Vector2(100, 100)
+states/Loco/node = SubResource("AnimationNodeBlendSpace1D_1foft")
+states/Loco/position = Vector2(380, 100)
+transitions = ["Idle", "Loco", SubResource("AnimationNodeStateMachineTransition_620pr"), "Loco", "Idle", SubResource("AnimationNodeStateMachineTransition_x26me")]
