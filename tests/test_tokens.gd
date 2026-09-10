@@ -52,11 +52,30 @@ func _run() -> void:
 			all_corners = false
 	_check(all_corners, "tokens cover the four room corners")
 
-	# Range semantics (out-of-range deactivation, in-range activation) cannot
-	# be asserted here: the headless build runs the Dummy audio driver, where
-	# AudioStreamPlayer3D.playing does not reflect the real activation logic.
-	# That part is verified on the WEB build (real audio driver) via the
-	# player telemetry: walk to a corner and watch `near`/`aud` in gameState.
+	# Range semantics with the player-mounted listener: tokens manage their
+	# own lifecycle (play on entry, stop on exit) because Godot 4 culls
+	# out-of-range 3D players PERMANENTLY (no auto-resume) — a one-shot play()
+	# in _ready left every start-out-of-range token silent forever.
+	var player := main.get_node("Player") as CharacterBody3D
+	var near_token := tokens[0] as Node3D
+	var near_audio := near_token.get_node("Sound") as AudioStreamPlayer3D
+	player.global_position = near_token.global_position + Vector3(0.5, 0, 0.5)
+	player.velocity = Vector3.ZERO
+	for i in 20:
+		await get_tree().physics_frame
+	_check(near_audio.playing, "token plays when the listener is in range")
+
+	player.global_position = Vector3(0, 0.1, 0)
+	player.velocity = Vector3.ZERO
+	for i in 30:
+		await get_tree().physics_frame
+	_check(not near_audio.playing, "token stops when the listener leaves range")
+
+	player.global_position = near_token.global_position + Vector3(0.5, 0, 0.5)
+	player.velocity = Vector3.ZERO
+	for i in 20:
+		await get_tree().physics_frame
+	_check(near_audio.playing, "token plays again on re-entry")
 
 	# The 3D audio listener must ride the PLAYER, not the camera: the iso
 	# camera hovers ~11 m away, so a camera-mounted listener keeps every token

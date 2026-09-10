@@ -23,10 +23,24 @@ func _ready() -> void:
 		stream.loop = true
 	_audio.stream = stream
 	_glow.light_color = glow_color
-	_audio.play()
-	# NOTE: no watchdog — out-of-range culling by the engine is EXPECTED
-	# (playing goes false beyond max_distance); a restart loop would just
-	# fight it and make the state unreadable.
+
+
+func _process(_delta: float) -> void:
+	# Lifecycle by listener distance. A single play() in _ready is NOT enough:
+	# the engine deactivates out-of-range 3D players and (in Godot 4) never
+	# resumes them, so tokens that START beyond max_distance stayed silent
+	# forever (the F-002 "no sound" bug). Restart on entry instead.
+	if stream == null:
+		return
+	var listener := get_viewport().get_audio_listener_3d()
+	if listener == null:
+		return
+	var d := global_position.distance_to(listener.global_position)
+	if d <= _audio.max_distance:
+		if not _audio.playing:
+			_audio.play()
+	elif _audio.playing:
+		_audio.stop()
 
 
 func distance_to(player: Node3D) -> float:
