@@ -58,6 +58,17 @@ func _run() -> void:
 	# That part is verified on the WEB build (real audio driver) via the
 	# player telemetry: walk to a corner and watch `near`/`aud` in gameState.
 
+	# The 3D audio listener must ride the PLAYER, not the camera: the iso
+	# camera hovers ~11 m away, so a camera-mounted listener keeps every token
+	# beyond the 9 m cutoff and mutes the whole mechanic (real F-002 bug).
+	var listeners: Array[AudioListener3D] = []
+	for l in main.find_children("*", "AudioListener3D", true, false):
+		if (l as AudioListener3D).is_current():
+			listeners.append(l as AudioListener3D)
+	_check(listeners.size() == 1
+		and listeners[0].get_parent() is CharacterBody3D,
+		"one current AudioListener3D mounted on the player (%d found)" % listeners.size())
+
 
 func _check(ok: bool, what: String) -> void:
 	print("  %s: %s" % ["PASS" if ok else "FAIL", what])
