@@ -19,7 +19,6 @@
 
 | ID | Name | Branch | Checklist | How to run | Result |
 |---|---|---|---|---|---|
-| F-002 | Proximity sound tokens | feat/F-002-proximity-sound-tokens | see F-002.md | game tab in ZCode browser (or http://127.0.0.1:8741) — CLICK once (audio unlock), walk to each corner | pending |
 
 _(Empty = no feature is ready for testing yet.)_
 
@@ -27,4 +26,5 @@ _(Empty = no feature is ready for testing yet.)_
 
 | ID | Result | Date | Short notes |
 |---|---|---|---|
+| F-002 | pass | 2026-09-10 | "nghe duoc roi" - audible web+desktop after zero-length-loop root cause; -6dB tuned per tester. Merged to main. |
 | F-001 | pass | 2026-09-10 | Move set approved in chat after 5 feedback rounds: knee fix, smoothness, Shift fast-walk, Ctrl sprint, glide stops. Merged to main. |

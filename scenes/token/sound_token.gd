@@ -17,7 +17,7 @@ extends Node3D
 @export var glow_color := Color(1.0, 0.8, 0.4)
 
 const FULL_RADIUS := 3.5
-const BASE_DB := 2.0
+const BASE_DB := -6.0     # tuned in playtest: +2 was too loud up close
 const FLOOR_DB := -30.0   # faint but present when far — never silent
 
 @onready var _glow: OmniLight3D = $Glow
