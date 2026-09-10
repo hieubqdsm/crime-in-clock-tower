@@ -20,9 +20,8 @@ const FULL_RADIUS := 3.5
 const BASE_DB := -6.0     # tuned in playtest: +2 was too loud up close
 const FLOOR_DB := -30.0   # faint but present when far — never silent
 
+@onready var _audio: AudioStreamPlayer = $Sound
 @onready var _glow: OmniLight3D = $Glow
-
-var _audio: AudioStreamPlayer
 
 
 func _ready() -> void:
@@ -42,12 +41,7 @@ func _ready() -> void:
 		wav.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	if stream is AudioStreamMP3 and not stream.loop:
 		stream.loop = true
-	_audio = AudioStreamPlayer.new()
-	_audio.name = "Sound"  # stable path for tests/HUD/telemetry
 	_audio.stream = stream
-	_audio.bus = "Master"  # baseline layer: directly on Master, no custom bus
-	add_child(_audio)
-	_audio.volume_db = FLOOR_DB
 	_audio.play()
 	_glow.light_color = glow_color
 

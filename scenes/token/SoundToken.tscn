@@ -17,6 +17,10 @@ height = 0.5
 [node name="SoundToken" type="Node3D"]
 script = ExtResource("1_token")
 
+[node name="Sound" type="AudioStreamPlayer" parent="."]
+volume_db = -30.0
+bus = "Master"
+
 [node name="TokenMesh" type="MeshInstance3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.25, 0)
 mesh = SubResource("token_mesh")
