@@ -4,39 +4,37 @@
 animation = &"Idle"
 
 [sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ngjva"]
-animation = &"Run"
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qs458"]
-animation = &"Sprint"
-
-[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ypd4k"]
 animation = &"Walk"
 
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_1foft"]
-xfade_time = 0.12
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_qs458"]
+animation = &"Run"
+
+[sub_resource type="AnimationNodeAnimation" id="AnimationNodeAnimation_ypd4k"]
+animation = &"Sprint"
+
+[sub_resource type="AnimationNodeBlendSpace1D" id="AnimationNodeBlendSpace1D_1foft"]
+min_space = 0.0
+max_space = 5.0
+sync_mode = 1
+blend_point_0/node = SubResource("AnimationNodeAnimation_ngjva")
+blend_point_0/pos = 1.44
+blend_point_0/name = &"0"
+blend_point_1/node = SubResource("AnimationNodeAnimation_qs458")
+blend_point_1/pos = 3.08
+blend_point_1/name = &"1"
+blend_point_2/node = SubResource("AnimationNodeAnimation_ypd4k")
+blend_point_2/pos = 4.63
+blend_point_2/name = &"2"
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_620pr"]
-xfade_time = 0.2
+xfade_time = 0.15
 
 [sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_x26me"]
-xfade_time = 0.15
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_ykfmb"]
-xfade_time = 0.15
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_nxt4i"]
-xfade_time = 0.12
-
-[sub_resource type="AnimationNodeStateMachineTransition" id="AnimationNodeStateMachineTransition_a8mj7"]
-xfade_time = 0.12
+xfade_time = 0.3
 
 [resource]
 states/Idle/node = SubResource("AnimationNodeAnimation_ute0t")
 states/Idle/position = Vector2(100, 100)
-states/Run/node = SubResource("AnimationNodeAnimation_ngjva")
-states/Run/position = Vector2(500, 100)
-states/Sprint/node = SubResource("AnimationNodeAnimation_qs458")
-states/Sprint/position = Vector2(700, 100)
-states/Walk/node = SubResource("AnimationNodeAnimation_ypd4k")
-states/Walk/position = Vector2(300, 100)
-transitions = ["Idle", "Walk", SubResource("AnimationNodeStateMachineTransition_1foft"), "Walk", "Idle", SubResource("AnimationNodeStateMachineTransition_620pr"), "Walk", "Run", SubResource("AnimationNodeStateMachineTransition_x26me"), "Run", "Walk", SubResource("AnimationNodeStateMachineTransition_ykfmb"), "Run", "Sprint", SubResource("AnimationNodeStateMachineTransition_nxt4i"), "Sprint", "Run", SubResource("AnimationNodeStateMachineTransition_a8mj7")]
+states/Loco/node = SubResource("AnimationNodeBlendSpace1D_1foft")
+states/Loco/position = Vector2(380, 100)
+transitions = ["Idle", "Loco", SubResource("AnimationNodeStateMachineTransition_620pr"), "Loco", "Idle", SubResource("AnimationNodeStateMachineTransition_x26me")]

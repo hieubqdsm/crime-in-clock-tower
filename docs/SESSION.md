@@ -14,6 +14,11 @@ next_action: "F-001 is dev_done + auto_test pass and sits in docs/PLAYTEST_QUEUE
 # Evidence — work DONE in this session, with proof (commit/file).
 # No evidence = considered not done. (Ralph-handoff: evidence field)
 done:
+  - "Stop behavior fixed (chat 2026-09-10): legs no longer spin back on key
+    release — locomotion is now Idle <-> Loco(BlendSpace1D sync, Walk/Run/
+    Sprint points at 1.44/3.08/4.63, blend_position = real speed) + accel/
+    decel (14/9 m/s²). Headless 17/17 (blend-position gait checks); web decel
+    curve verified: 4.63 -> 3.99 -> 1.87 -> Idle over ~0.45 s"
   - "Sprint pose fixed (chat 2026-09-10): the lean sign was INVERTED for
     up-pointing bones (+x = forward for the chest; legs are the opposite) —
     sprint now +14° forward chest lean + 8° head tuck (neck animated, clips
@@ -97,6 +102,10 @@ decisions_pending: []
     FORWARD. The "forward lean" was authored negative = backward arch —
     that's where the belly-out strut look came from (kept intentionally for
     the Run/Shift clip).
+  - Locomotion gaits (walk/run/sprint) belong in ONE synced BlendSpace1D keyed
+    by real speed, never as separate FSM states: per-gait transitions restart
+    clips at frame 0 and chained blends make the legs visibly unwind ("spin
+    back") on stop. Combine with velocity accel/decel for natural stops.
 - Live web build for the tester: `python -m http.server 8741 --directory build/web`
   (may still be running) → http://127.0.0.1:8741 — the game tab was left open in
   the ZCode in-app browser (marked deliverable). Rebuild with

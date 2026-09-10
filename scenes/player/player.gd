@@ -7,20 +7,24 @@ extends CharacterBody3D
 ## view, whichever way the camera is aimed. The model itself faces +Z
 ## (built facing -Y in Blender; see tools/blender/make_mannequin.py).
 ##
-## Animations run through an AnimationTree state machine ($AnimTree +
-## mannequin_fsm.tres): Idle <-> Walk with xfade crossfades, and the model
-## heading eases toward the movement direction (no instant snaps).
+## Animations: Idle <-> Loco state machine, where Loco is a synced BlendSpace1D
+## (Walk 1.44 / Run 3.08 / Sprint 4.63) driven by the CURRENT horizontal speed,
+## so gait changes blend continuously with matched cycle phase. Velocity eases
+## toward the target (accel/decel) — releasing the keys lets the mannequin
+## glide to a stop while its legs settle, instead of stopping dead.
 
 ## Speeds are derived from each clip's stride so the feet stay planted —
 ## see tools/blender/make_mannequin.py. Keep in sync when clips change.
 const WALK_SPEED := 1.44      # Walk_loop: 1.44 m per 1 s cycle
 const RUN_SPEED := 3.08       # Run_loop (fast walk, Shift): 1.54 m / 0.5 s
 const SPRINT_SPEED := 4.63    # Sprint_loop (true run, Ctrl): 1.93 m / 0.42 s
+const ACCEL := 14.0           # m/s^2 toward the target speed
+const DECEL := 9.0            # m/s^2 toward zero when no input
 const TURN_SMOOTH := 12.0
 const IDLE_STATE := "Idle"
-const WALK_STATE := "Walk"
-const RUN_STATE := "Run"
-const SPRINT_STATE := "Sprint"
+const LOCO_STATE := "Loco"
+## Below this horizontal speed (and no input) the tree travels back to Idle.
+const STOP_SPEED := 0.3
 
 @export var walk_speed := WALK_SPEED
 @export var run_speed := RUN_SPEED
@@ -48,19 +52,25 @@ func _physics_process(delta: float) -> void:
 
 	if not is_on_floor():
 		velocity.y -= 20.0 * delta
-	var speed := walk_speed
-	if Input.is_action_pressed("sprint"):      # Ctrl — true sprint wins
-		speed = sprint_speed
-	elif Input.is_action_pressed("fast_walk"): # Shift — fast walk
-		speed = run_speed
-	velocity.x = dir.x * speed
-	velocity.z = dir.z * speed
+
+	var target := dir * _target_speed()
+	var rate := ACCEL if dir != Vector3.ZERO else DECEL
+	velocity.x = move_toward(velocity.x, target.x, rate * delta)
+	velocity.z = move_toward(velocity.z, target.z, rate * delta)
 	move_and_slide()
 
 	_update_visuals(dir, delta)
 	_web_frame += 1
 	if _web_frame % 10 == 0:
 		_push_web_state()
+
+
+func _target_speed() -> float:
+	if Input.is_action_pressed("sprint"):        # Ctrl — true sprint wins
+		return sprint_speed
+	if Input.is_action_pressed("fast_walk"):     # Shift — fast walk
+		return run_speed
+	return walk_speed
 
 
 func _floor_direction(input: Vector2) -> Vector3:
@@ -79,19 +89,18 @@ func _floor_direction(input: Vector2) -> Vector3:
 
 
 func _update_visuals(dir: Vector3, delta: float) -> void:
-	var moving := dir != Vector3.ZERO
-	if moving:
+	var speed := Vector2(velocity.x, velocity.z).length()
+	var moving := dir != Vector3.ZERO or speed > STOP_SPEED
+	if dir != Vector3.ZERO:
 		# Exponential ease toward the movement heading — smooth 8-way turns.
 		_heading = lerp_angle(_heading, atan2(dir.x, dir.z),
 			1.0 - exp(-TURN_SMOOTH * delta))
 		_model.rotation.y = _heading
-		var state := WALK_STATE
-		if Input.is_action_pressed("sprint"):
-			state = SPRINT_STATE
-		elif Input.is_action_pressed("fast_walk"):
-			state = RUN_STATE
-		if _playback.get_current_node() != state:
-			_playback.travel(state)
+	if moving:
+		# Blend point = real speed: gaits crossfade with matched cycle phase.
+		_anim_tree.set("parameters/Loco/blend_position", speed)
+		if _playback.get_current_node() != LOCO_STATE:
+			_playback.travel(LOCO_STATE)
 	elif _playback.get_current_node() != IDLE_STATE:
 		_playback.travel(IDLE_STATE)
 	_was_moving = moving
@@ -102,7 +111,8 @@ func _push_web_state() -> void:
 	## No-op outside the web platform; see docs/features/F-001.md.
 	if not OS.has_feature("web"):
 		return
-	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s}"
+	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s,bp:%.2f}"
 		% [global_position.x, global_position.y, global_position.z,
 			velocity.x, velocity.z, str(_was_moving),
-			JSON.stringify(_playback.get_current_node())])
+			JSON.stringify(_playback.get_current_node()),
+			Vector2(velocity.x, velocity.z).length()])

@@ -17,6 +17,10 @@ func _tree_state() -> String:
 	return _playback.get_current_node()
 
 
+func _blend_pos() -> float:
+	return _anim_tree.get("parameters/Loco/blend_position") as float
+
+
 func _ready() -> void:
 	await _run()
 	print("[test] %s (%d fail)" % ["PASS" if failures == 0 else "FAIL", failures])
@@ -57,47 +61,51 @@ func _run() -> void:
 	var want_rot := atan2(-0.7071, -0.7071)
 	_check(_angle_diff(_model.rotation.y, want_rot) < 0.15,
 		"model faces its movement direction (rot=%.2f want=%.2f)" % [_model.rotation.y, want_rot])
-	_check(_tree_state() == "Walk", "Walk state while moving (%s)" % _tree_state())
-	for i in 20:
+	_check(_tree_state() == "Loco" and absf(_blend_pos() - 1.44) < 0.35,
+		"Loco blends at walk speed while walking (%s bp=%.2f)" % [_tree_state(), _blend_pos()])
+	for i in 30:
 		await get_tree().physics_frame
-	_check(_tree_state() == "Idle", "crossfades back to Idle when stopped (%s)" % _tree_state())
+	_check(_tree_state() == "Idle", "glides to Idle when stopped (%s)" % _tree_state())
 	_check(_player.velocity.length() < 0.05,
 		"velocity is zero when idle (%.2f)" % _player.velocity.length())
 
-	# Fast walk (Shift): Run state at run speed; release Shift -> Walk.
+	# Fast walk (Shift): blend slides to the Run gait at run speed.
 	var run_start := _player.global_position
 	Input.action_press("move_up")
 	Input.action_press("fast_walk")
 	for i in 60:
 		await get_tree().physics_frame
-	_check(_tree_state() == "Run", "Run state while fast-walking (%s)" % _tree_state())
+	_check(absf(_blend_pos() - 3.08) < 0.4,
+		"blend at fast-walk speed (bp=%.2f want ~3.08)" % _blend_pos())
 	var run_d := _player.global_position - run_start
 	_check(run_d.length() > 2.2 and run_d.length() < 4.2,
-		"fast-walk speed for 1 s (moved %.2f m, expect ~3.08)" % run_d.length())
+		"fast-walk speed for 1 s (moved %.2f m, expect ~3.08 minus accel)" % run_d.length())
 	Input.action_release("fast_walk")
-	for i in 25:
+	for i in 30:
 		await get_tree().physics_frame
-	_check(_tree_state() == "Walk", "back to Walk when Shift released (%s)" % _tree_state())
+	_check(absf(_blend_pos() - 1.44) < 0.35,
+		"blend eases back to walk when Shift released (bp=%.2f)" % _blend_pos())
 
-	# True sprint (Ctrl): Sprint state at sprint speed, camera follows along.
+	# True sprint (Ctrl): blend slides to Sprint, camera follows along.
 	var cam := _main.get_node("IsometricCamera") as Camera3D
 	var sprint_start := _player.global_position
 	var cam_start := cam.global_position
 	Input.action_press("sprint")
 	for i in 60:
 		await get_tree().physics_frame
-	_check(_tree_state() == "Sprint", "Sprint state while Ctrl held (%s)" % _tree_state())
+	_check(absf(_blend_pos() - 4.63) < 0.4,
+		"blend at sprint speed (bp=%.2f want ~4.63)" % _blend_pos())
 	var sprint_d := _player.global_position - sprint_start
 	_check(sprint_d.length() > 3.4 and sprint_d.length() < 5.8,
-		"sprint speed for 1 s (moved %.2f m, expect ~4.63)" % sprint_d.length())
+		"sprint speed for 1 s (moved %.2f m, expect ~4.63 minus accel)" % sprint_d.length())
 	var cam_d := cam.global_position - cam_start
 	_check(cam_d.length() > 1.0 and cam_d.normalized().dot(sprint_d.normalized()) > 0.7,
 		"camera follows the player (cam moved %.2f m, same direction)" % cam_d.length())
 	Input.action_release("sprint")
 	Input.action_release("move_up")
-	for i in 20:
+	for i in 45:
 		await get_tree().physics_frame
-	_check(_tree_state() == "Idle", "back to Idle after sprint stop (%s)" % _tree_state())
+	_check(_tree_state() == "Idle", "glides back to Idle after sprint stop (%s)" % _tree_state())
 
 	# North wall (24 m room): park just south of it and sprint into it 1.5 s.
 	_player.global_position = Vector3(0, 0.1, -11.2)
