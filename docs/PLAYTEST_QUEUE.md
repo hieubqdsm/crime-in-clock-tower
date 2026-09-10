@@ -26,5 +26,6 @@ _(Empty = no feature is ready for testing yet.)_
 
 | ID | Result | Date | Short notes |
 |---|---|---|---|
+| F-003 | pass | 2026-09-10 | 2 players see each other + movement sync confirmed via tunnel + Pages. Merged to main. |
 | F-002 | pass | 2026-09-10 | "nghe duoc roi" - audible web+desktop after zero-length-loop root cause; -6dB tuned per tester. Merged to main. |
 | F-001 | pass | 2026-09-10 | Move set approved in chat after 5 feedback rounds: knee fix, smoothness, Shift fast-walk, Ctrl sprint, glide stops. Merged to main. |

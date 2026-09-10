@@ -47,7 +47,10 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	# y = +1 when pressing move_up (get_vector returns positive_y - negative_y,
 	# and screen-space y grows downward, so up-screen must be the positive arg).
-	var input := Input.get_vector("move_left", "move_right", "move_down", "move_up")
+	# While typing into a UI field (Options server URL), WASD belongs to it.
+	var input := Vector2.ZERO
+	if not (get_viewport().gui_get_focus_owner() is LineEdit):
+		input = Input.get_vector("move_left", "move_right", "move_down", "move_up")
 	var dir := _floor_direction(input)
 
 	if not is_on_floor():
