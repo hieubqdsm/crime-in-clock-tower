@@ -1,9 +1,8 @@
 extends CanvasLayer
 
-## F-002 DIAGNOSTIC HUD (remove before shipping F-002): shows the live
-## Master-bus peak meters and the nearest token's playback state, so silence
-## can be localized to "engine not mixing" vs "OS/app muted" on ANY platform,
-## including editor runs where there is no browser console.
+## F-002 DIAGNOSTIC HUD (remove before shipping F-002): measures everything
+## from the ACTUAL 3D audio listener (viewport-registered), not the camera —
+## camera-based distances were 11 m off and made the numbers meaningless.
 
 var _label: Label
 
@@ -17,14 +16,14 @@ func _ready() -> void:
 
 
 func _process(_delta: float) -> void:
-	var cam := get_viewport().get_camera_3d()
-	var pos := cam.global_position if cam != null else Vector3.ZERO
+	var listener := get_viewport().get_audio_listener_3d()
+	var pos: Vector3 = listener.global_position if listener != null else Vector3.INF
 	var nearest_d := 999.0
 	var nearest_name := "-"
 	var nearest_playing := false
 	for t in get_tree().get_nodes_in_group("sound_tokens"):
 		var token := t as Node3D
-		var d := pos.distance_to(token.global_position)
+		var d: float = pos.distance_to(token.global_position) if listener != null else 999.0
 		if d < nearest_d:
 			nearest_d = d
 			nearest_name = String(token.name)
@@ -32,5 +31,7 @@ func _process(_delta: float) -> void:
 			nearest_playing = audio != null and audio.playing
 	var l := AudioServer.get_bus_peak_volume_left_db(0, 0)
 	var r := AudioServer.get_bus_peak_volume_right_db(0, 0)
-	_label.text = "Master peak %0.0f / %0.0f dB   |   %s dist %0.1f m   playing %s" % [
-		l, r, nearest_name, nearest_d, str(nearest_playing)]
+	_label.text = "peak %0.0f/%0.0f dB | listener %s | %s @ %0.1f m playing %s" % [
+		l, r,
+		"NONE" if listener == null else String(listener.get_parent().name),
+		nearest_name, nearest_d, str(nearest_playing)]

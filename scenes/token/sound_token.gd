@@ -10,16 +10,13 @@ extends Node3D
 @onready var _audio: AudioStreamPlayer3D = $Sound
 @onready var _glow: OmniLight3D = $Glow
 
-var _watchdog := 0.0
-
 
 func _ready() -> void:
 	add_to_group("sound_tokens")
 	if stream == null:
 		return
-	# Looping: the WAV importer ignores its loop params (runtime guard below);
-	# the MP3 importer honors its loop param but keep a guard anyway. A
-	# watchdog in _process restarts playback if a stream ever runs out.
+	# Looping: the WAV importer ignores its loop params in 4.7, so enable it
+	# here (guarded one-time mutation of the shared imported stream).
 	if stream is AudioStreamWAV and stream.loop_mode == AudioStreamWAV.LOOP_DISABLED:
 		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	if stream is AudioStreamMP3 and not stream.loop:
@@ -27,15 +24,9 @@ func _ready() -> void:
 	_audio.stream = stream
 	_glow.light_color = glow_color
 	_audio.play()
-
-
-func _process(delta: float) -> void:
-	_watchdog += delta
-	if _watchdog < 0.5:
-		return
-	_watchdog = 0.0
-	if stream != null and not _audio.playing:
-		_audio.play()
+	# NOTE: no watchdog — out-of-range culling by the engine is EXPECTED
+	# (playing goes false beyond max_distance); a restart loop would just
+	# fight it and make the state unreadable.
 
 
 func distance_to(player: Node3D) -> float:
