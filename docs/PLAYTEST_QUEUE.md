@@ -19,6 +19,7 @@
 
 | ID | Name | Branch | Checklist | How to run | Result |
 |---|---|---|---|---|---|
+| F-003 | Online foundation | feat/F-003-online-foundation | see F-003.md | `python tools/server/server.py` → game (Pages) → O → Connect → second BROWSER same flow | pending |
 
 _(Empty = no feature is ready for testing yet.)_
 

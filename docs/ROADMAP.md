@@ -26,6 +26,7 @@
 |---|---|---|---|---|---|---|---|---|
 | F-001 | Wooden mannequin isometric room movement | P1 | shipped | pass | pass | agent | feat/F-001-mannequin-isometric-room | — |
 | F-002 | Proximity sound tokens | P1 | shipped | pass | pass | agent | feat/F-002-proximity-sound-tokens | F-001 |
+| F-003 | Online foundation — websocket server + options UI | P1 | dev_done | pass | pending | agent | feat/F-003-online-foundation | F-001, F-002 |
 
 _(Add a row when creating a new feature. The status/auto-test/playtest columns follow the feature file.)_
 

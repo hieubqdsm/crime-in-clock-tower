@@ -9,7 +9,8 @@ extends Node
 
 signal state_changed(connected: bool, detail: String)
 
-const DEFAULT_URL := "ws://localhost:8765"
+const DEFAULT_URL := "ws://127.0.0.1:8765"   # localhost may resolve ::1 in
+                                             # browsers; server binds IPv4
 const SEND_HZ := 12.0
 
 signal player_state(id: String, x: float, z: float, ry: float, moving: bool)

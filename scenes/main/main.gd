@@ -27,6 +27,14 @@ func _process(_delta: float) -> void:
 		var moving := Vector2(_player.velocity.x, _player.velocity.z).length() > 0.3
 		_net.set_own_state(_player.global_position.x, _player.global_position.z,
 			model.rotation.y, moving)
+	if OS.has_feature("web") and Engine.get_process_frames() % 10 == 0:
+		# str(false) is "False" (capital) — not valid JS; lowercase it.
+		var btn := _options.get_node_or_null("Panel/VBox/ConnectBtn") as Control
+		var btn_rect := btn.get_global_rect() if btn != null else Rect2()
+		JavaScriptBridge.eval("window.netState={conn:%s,opts:%s,remotes:%d,btn:[%d,%d,%d,%d]}"
+			% [str(_net.connected).to_lower(), str(_options.visible).to_lower(),
+				_remote_players.size(), btn_rect.position.x, btn_rect.position.y,
+				btn_rect.size.x, btn_rect.size.y])
 
 
 func _on_connect_requested(url: String) -> void:

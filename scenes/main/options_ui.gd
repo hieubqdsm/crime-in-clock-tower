@@ -6,7 +6,9 @@ extends CanvasLayer
 
 signal connect_requested(url: String)
 
-const DEFAULT_URL := "ws://localhost:8765"
+const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
+                                             # resolve ::1 while the room
+                                             # server binds IPv4 only
 
 @onready var _url_edit: LineEdit = $Panel/VBox/UrlEdit
 @onready var _status: Label = $Panel/VBox/Status
