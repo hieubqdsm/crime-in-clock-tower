@@ -72,6 +72,13 @@ decisions_pending: []
     `OS.has_feature("web")`.
   - Web input: key events must hit the CANVAS element and the webview needs one
     REAL click first (`document.hasFocus()`).
+  - Web audio on nothreads builds: ONLY raw-PCM WAV in RAM works
+    (compress/mode=0). Disk-streamed WAV (mode 2), AudioStreamMP3, AND
+    AudioStreamPlayer3D.get_playback_position() each deadlock the engine
+    SILENTLY at load/call (3 separate incidents — console shows 3 boot lines
+    then nothing). Diagnose by loading the game in a same-origin iframe with
+    patched console; convert music via tools/audio/convert_mashup.py
+    (soundfile decodes mp3 without ffmpeg).
   - AnimationPlayer 4.7 has NO `play_with_crossfade` — use AnimationTree.
   - Multi-clip glb: shared slotted actions + per-object NLA strips
     (strip.action_slot), then clear animation_data.action.

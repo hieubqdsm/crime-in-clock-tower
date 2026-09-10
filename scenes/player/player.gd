@@ -113,14 +113,18 @@ func _push_web_state() -> void:
 		return
 	var nearest := 999.0
 	var in_range := 0
+	var tp_playing := 0
 	for t in get_tree().get_nodes_in_group("sound_tokens"):
 		var token := t as Node3D
 		var dist := global_position.distance_to(token.global_position)
-		nearest = minf(nearest, dist)
+		if dist < nearest:
+			nearest = dist
+			var audio := token.get_node_or_null("Sound") as AudioStreamPlayer3D
+			tp_playing = 1 if audio != null and audio.playing else 0
 		if dist <= 10.0:  # audible-range radius
 			in_range += 1
-	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s,bp:%.2f,near:%.1f,aud:%d}"
+	JavaScriptBridge.eval("window.gameState={px:%.3f,py:%.3f,pz:%.3f,vx:%.3f,vz:%.3f,moving:%s,anim:%s,bp:%.2f,near:%.1f,aud:%d,tp:%d}"
 		% [global_position.x, global_position.y, global_position.z,
 			velocity.x, velocity.z, str(_was_moving),
 			JSON.stringify(_playback.get_current_node()),
-			Vector2(velocity.x, velocity.z).length(), nearest, in_range])
+			Vector2(velocity.x, velocity.z).length(), nearest, in_range, tp_playing])

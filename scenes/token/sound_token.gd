@@ -17,12 +17,13 @@ func _ready() -> void:
 	add_to_group("sound_tokens")
 	if stream == null:
 		return
-	# The WAVs import with compress/mode=0 (raw PCM in RAM) — Disk-streamed
-	# audio hangs single-threaded web builds at scene load. Looping is applied
-	# here (the importer ignores its own loop params), and a watchdog restarts
-	# playback if the stream ever runs out — belt and braces across platforms.
+	# Looping: the WAV importer ignores its loop params (runtime guard below);
+	# the MP3 importer honors its loop param but keep a guard anyway. A
+	# watchdog in _process restarts playback if a stream ever runs out.
 	if stream is AudioStreamWAV and stream.loop_mode == AudioStreamWAV.LOOP_DISABLED:
 		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
+	if stream is AudioStreamMP3 and not stream.loop:
+		stream.loop = true
 	_audio.stream = stream
 	_glow.light_color = glow_color
 	_audio.play()
