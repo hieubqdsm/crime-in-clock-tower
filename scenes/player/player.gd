@@ -48,7 +48,7 @@ func _ready() -> void:
 		# is specific to 3D listeners. Remove once proximity audio is verified.
 		var diag := AudioStreamPlayer.new()
 		diag.stream = load("res://assets/audio/mashup.wav")
-		diag.volume_db = -26.0
+		diag.volume_db = -8.0
 		add_child(diag)
 		diag.play()
 
