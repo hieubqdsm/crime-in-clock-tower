@@ -40,11 +40,8 @@ func _run() -> void:
 		elif audio.stream is AudioStreamMP3:
 			looping = audio.stream.loop
 		_check(looping, "%s stream loops" % token.name)
-		var has_panner := false
-		for i in AudioServer.get_bus_effect_count(AudioServer.get_bus_index(audio.bus)):
-			if AudioServer.get_bus_effect(AudioServer.get_bus_index(audio.bus), i) is AudioEffectPanner:
-				has_panner = true
-		_check(has_panner, "%s bus carries a panner" % token.name)
+		_check(audio.bus == "Master", "%s sits directly on the Master bus" % token.name)
+		_check(audio.playing, "%s is playing from scene load" % token.name)
 		streams[audio.stream.resource_path] = true
 	_check(streams.size() >= 1, "tokens carry audio streams (%d)" % streams.size())
 
@@ -54,30 +51,27 @@ func _run() -> void:
 			all_corners = false
 	_check(all_corners, "tokens cover the four room corners")
 
-	# Range semantics with the player-mounted listener: tokens manage their
-	# own lifecycle (play on entry, stop on exit) because Godot 4 culls
-	# out-of-range 3D players PERMANENTLY (no auto-resume) — a one-shot play()
-	# in _ready left every start-out-of-range token silent forever.
+# Range semantics with the player-mounted listener: tokens ALWAYS play and
+# only their volume tracks the distance (near ~= BASE_DB, far == FLOOR_DB).
 	var player := main.get_node("Player") as CharacterBody3D
 	var near_token := tokens[0] as Node3D
 	var near_audio := near_token.get_node_or_null("Sound") as AudioStreamPlayer
 	player.global_position = near_token.global_position + Vector3(0.5, 0, 0.5)
 	player.velocity = Vector3.ZERO
-	for i in 20:
+	for i in 10:
 		await get_tree().physics_frame
-	_check(near_audio.playing, "token plays when the listener is in range")
+	var near_vdb := near_audio.volume_db
 
 	player.global_position = Vector3(0, 0.1, 0)
 	player.velocity = Vector3.ZERO
-	for i in 30:
+	for i in 10:
 		await get_tree().physics_frame
-	_check(not near_audio.playing, "token stops when the listener leaves range")
+	var far_vdb := near_audio.volume_db
 
-	player.global_position = near_token.global_position + Vector3(0.5, 0, 0.5)
-	player.velocity = Vector3.ZERO
-	for i in 20:
-		await get_tree().physics_frame
-	_check(near_audio.playing, "token plays again on re-entry")
+	_check(near_vdb > 0.0, "volume at the token is full (%+.1f dB)" % near_vdb)
+	_check(far_vdb <= -18.0, "volume mid-room drops well below full (%+.1f dB)" % far_vdb)
+	_check(near_vdb - far_vdb > 20.0,
+		"distance gradient is audible (%.1f dB swing)" % (near_vdb - far_vdb))
 
 	# The 3D audio listener must ride the PLAYER, not the camera: the iso
 	# camera hovers ~11 m away, so a camera-mounted listener keeps every token
