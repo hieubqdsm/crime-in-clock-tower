@@ -61,11 +61,14 @@ func _process(_delta: float) -> void:
 		var btn_rect := btn.get_global_rect() if btn != null else Rect2()
 		var gear := _options.get_node_or_null("GearBtn") as Control
 		var gear_rect := gear.get_global_rect() if gear != null else Rect2()
-		JavaScriptBridge.eval("window.netState={conn:%s,opts:%s,remotes:%d,btn:[%d,%d,%d,%d],gear:[%d,%d,%d,%d]}"
+		var micb := _options.get_node_or_null("Panel/VBox/MicBtn") as Control
+		var mic_rect := micb.get_global_rect() if micb != null else Rect2()
+		JavaScriptBridge.eval("window.netState={conn:%s,opts:%s,remotes:%d,btn:[%d,%d,%d,%d],gear:[%d,%d,%d,%d],mic:[%d,%d,%d,%d]}"
 			% [str(_net.connected).to_lower(), _options.is_open(),
 				_remote_players.size(), btn_rect.position.x, btn_rect.position.y,
 				btn_rect.size.x, btn_rect.size.y,
-				gear_rect.position.x, gear_rect.position.y, gear_rect.size.x, gear_rect.size.y])
+				gear_rect.position.x, gear_rect.position.y, gear_rect.size.x, gear_rect.size.y,
+				mic_rect.position.x, mic_rect.position.y, mic_rect.size.x, mic_rect.size.y])
 
 
 func _on_disconnect() -> void:
