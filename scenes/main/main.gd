@@ -13,10 +13,22 @@ const REMOTE_SCENE := preload("res://scenes/net/RemotePlayer.tscn")
 @onready var _voice = $VoiceCapture   # untyped: signal access is dynamic
 
 var _remote_players := {}
+var _dbg: Label
+
+
+func _make_dbg_strip() -> void:
+	# F-004 diagnostics (remove when voice is trusted): mic input level,
+	# voice frames sent/received, nearest token volume.
+	_dbg = Label.new()
+	_dbg.position = Vector2(12, 690)
+	_dbg.add_theme_font_size_override("font_size", 16)
+	_dbg.add_theme_color_override("font_color", Color(0.8, 0.9, 1.0))
+	add_child(_dbg)
 
 
 func _ready() -> void:
 	_options.set_known_name(_net.player_name)
+	_make_dbg_strip()
 	_set_own_name(_net.player_name)
 	_net.state_changed.connect(_on_net_state)
 	_net.player_state.connect(_on_player_state)
@@ -34,6 +46,15 @@ func _process(_delta: float) -> void:
 		var moving := Vector2(_player.velocity.x, _player.velocity.z).length() > 0.3
 		_net.set_own_state(_player.global_position.x, _player.global_position.z,
 			model.rotation.y, moving)
+	if Engine.get_process_frames() % 10 == 0:
+		var near_vol := -999.0
+		for t in get_tree().get_nodes_in_group("sound_tokens"):
+			if t.has_method("volume_db"):
+				near_vol = maxf(near_vol, t.volume_db())
+		if _dbg != null:
+			_dbg.text = "🎤 %d%%  ↑%d ↓%d  ♪ %+.0f dB" % [
+				int(_voice.last_level * 100.0) if _voice != null else 0,
+				_net.voice_sent, _net.voice_recv, near_vol]
 	if OS.has_feature("web") and Engine.get_process_frames() % 10 == 0:
 		# str(false) is "False" (capital) — not valid JS; lowercase it.
 		var btn := _options.get_node_or_null("Panel/VBox/ConnectBtn") as Control

@@ -20,6 +20,8 @@ signal voice_received(id: String, pcm: PackedByteArray)
 var player_id := ""
 var player_name := ""
 var connected := false
+var voice_sent := 0      # voice frames shipped to the server
+var voice_recv := 0      # voice frames received from others
 
 var _ws := WebSocketPeer.new()
 var _send_accum := 0.0
@@ -89,6 +91,7 @@ func _process(delta: float) -> void:
 					# binary voice frame: b"<16-byte sender id><int16 PCM>"
 					if packet.size() > 16:
 						var sender := packet.slice(0, 16).get_string_from_utf8().replace(String.chr(0), "")
+						voice_recv += 1
 						voice_received.emit(sender, packet.slice(16))
 			_send_accum += delta
 			if _send_accum >= 1.0 / SEND_HZ and not _own_state.is_empty():
@@ -123,6 +126,7 @@ func send_voice(pcm: PackedByteArray) -> void:
 		frame.append(0)
 	frame.append_array(pcm)
 	_ws.put_packet(frame)
+	voice_sent += 1
 
 
 func _handle(msg: Dictionary) -> void:

@@ -20,6 +20,9 @@ var _capture_effect: AudioEffectCapture
 var _accum := 0.0
 var _enabled := false
 
+var last_level := 0.0   # RMS of the most recent chunk (0..1)
+var chunks := 0         # chunks emitted since enable
+
 
 func enable() -> bool:
 	# Idempotent; returns success. On web the browser permission prompt
@@ -72,8 +75,12 @@ func _process(delta: float) -> void:
 	# Bus frames are Stereo PCM floats; mono-mix into 16-bit LE.
 	var pcm := PackedByteArray()
 	pcm.resize(frames * 2)
+	var sum_sq := 0.0
 	for i in frames:
 		var mono: float = (stereo[i].x + stereo[i].y) * 0.5
+		sum_sq += mono * mono
 		var v := int(clampf(mono, -1.0, 1.0) * 32767.0)
 		pcm.encode_s16(i * 2, v)
+	last_level = sqrt(sum_sq / maxf(1.0, frames))
+	chunks += 1
 	captured.emit(pcm)
