@@ -194,6 +194,11 @@ func _enable_desktop() -> bool:
 	return true
 
 
+func _ready() -> void:
+	if OS.has_feature("web"):
+		_define_js_playback()
+
+
 func _define_js_playback() -> void:
 	## Gapless per-remote voice playback in WebAudio: every chunk is
 	## scheduled to start exactly when the previous ends (jitter buffer =

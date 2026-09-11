@@ -74,7 +74,9 @@ func receive_voice(pcm: PackedByteArray, listener_pos: Vector3) -> void:
 	if OS.has_feature("web"):
 		# gapless WebAudio chain (see voice_capture._define_js_playback)
 		var b64: String = Marshalls.raw_to_base64(scaled)
-		JavaScriptBridge.eval("window.__citVoiceFeed('%s','%s',%f)"
+		JavaScriptBridge.eval(
+			"(function(){window.__citFeedCalls=(window.__citFeedCalls||0)+1;" +
+			"try{window.__citVoiceFeed('%s','%s',%f)}catch(e){window.__citFeedErr=String(e)}})()"
 			% [_net_id, b64, gain], true)
 	else:
 		_voice_buf.append_array(scaled)

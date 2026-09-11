@@ -68,9 +68,11 @@ func _process(_delta: float) -> void:
 		var gear_rect := gear.get_global_rect() if gear != null else Rect2()
 		var micb := _options.get_node_or_null("Panel/VBox/MicBtn") as Control
 		var mic_rect := micb.get_global_rect() if micb != null else Rect2()
-		JavaScriptBridge.eval("window.netState={conn:%s,opts:%s,remotes:%d,btn:[%d,%d,%d,%d],gear:[%d,%d,%d,%d],mic:[%d,%d,%d,%d]}"
+		JavaScriptBridge.eval("window.netState={conn:%s,opts:%s,remotes:%d,vs:%d,vr:%d,fc:%d,btn:[%d,%d,%d,%d],gear:[%d,%d,%d,%d],mic:[%d,%d,%d,%d]}"
 			% [str(_net.connected).to_lower(), _options.is_open(),
-				_remote_players.size(), btn_rect.position.x, btn_rect.position.y,
+				_remote_players.size(), _net.voice_sent, _net.voice_recv,
+				JavaScriptBridge.eval("window.__citFeedCalls ?? 0", true) if OS.has_feature("web") else 0,
+				btn_rect.position.x, btn_rect.position.y,
 				btn_rect.size.x, btn_rect.size.y,
 				gear_rect.position.x, gear_rect.position.y, gear_rect.size.x, gear_rect.size.y,
 				mic_rect.position.x, mic_rect.position.y, mic_rect.size.x, mic_rect.size.y])
