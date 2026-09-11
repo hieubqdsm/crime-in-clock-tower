@@ -25,6 +25,7 @@ func _ready() -> void:
 	_voice.captured.connect(_on_voice_captured)
 	_options.connect_requested.connect(_on_connect_requested)
 	_options.mic_toggle_requested.connect(_on_mic_toggle)
+	_options.disconnect_requested.connect(_on_disconnect)
 
 
 func _process(_delta: float) -> void:
@@ -37,10 +38,17 @@ func _process(_delta: float) -> void:
 		# str(false) is "False" (capital) — not valid JS; lowercase it.
 		var btn := _options.get_node_or_null("Panel/VBox/ConnectBtn") as Control
 		var btn_rect := btn.get_global_rect() if btn != null else Rect2()
-		JavaScriptBridge.eval("window.netState={conn:%s,opts:%s,remotes:%d,btn:[%d,%d,%d,%d]}"
-			% [str(_net.connected).to_lower(), str(_options.visible).to_lower(),
+		var gear := _options.get_node_or_null("GearBtn") as Control
+		var gear_rect := gear.get_global_rect() if gear != null else Rect2()
+		JavaScriptBridge.eval("window.netState={conn:%s,opts:%s,remotes:%d,btn:[%d,%d,%d,%d],gear:[%d,%d,%d,%d]}"
+			% [str(_net.connected).to_lower(), _options.is_open(),
 				_remote_players.size(), btn_rect.position.x, btn_rect.position.y,
-				btn_rect.size.x, btn_rect.size.y])
+				btn_rect.size.x, btn_rect.size.y,
+				gear_rect.position.x, gear_rect.position.y, gear_rect.size.x, gear_rect.size.y])
+
+
+func _on_disconnect() -> void:
+	_net.disconnect_me()
 
 
 func _on_connect_requested(url: String, player_name: String) -> void:
@@ -51,6 +59,7 @@ func _on_connect_requested(url: String, player_name: String) -> void:
 
 func _on_net_state(ok: bool, detail: String) -> void:
 	_options.set_status(detail, ok)
+	_options.set_connected(ok)
 	if not ok:
 		for id in _remote_players:
 			_remote_players[id].queue_free()

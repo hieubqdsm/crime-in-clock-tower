@@ -8,14 +8,15 @@ font_size = 28
 [node name="OptionsUI" type="CanvasLayer"]
 script = ExtResource("1_script")
 
-[node name="Hint" type="Label" parent="."]
-anchors_preset = 0
-offset_left = 12.0
+[node name="GearBtn" type="Button" parent="."]
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -110.0
 offset_top = 12.0
-offset_right = 500.0
-offset_bottom = 40.0
-text = "Nhấn O — Options / tên / kết nối server"
-modulate = Color(1, 1, 1, 0.55)
+offset_right = -16.0
+offset_bottom = 44.0
+text = "Cài đặt (O)"
 
 [node name="Panel" type="PanelContainer" parent="."]
 anchors_preset = 8
@@ -38,7 +39,7 @@ offset_bottom = 232.0
 
 [node name="Title" type="Label" parent="Panel/VBox"]
 layout_mode = 2
-text = "Options"
+text = "Cài đặt"
 label_settings = SubResource("title_font")
 
 [node name="ServerLabel" type="Label" parent="Panel/VBox"]
@@ -70,4 +71,5 @@ layout_mode = 2
 text = "chưa kết nối"
 
 [connection signal="pressed" from="Panel/VBox/ConnectBtn" to="." method="_on_connect_pressed"]
+[connection signal="pressed" from="GearBtn" to="." method="_on_gear_pressed"]
 [connection signal="pressed" from="Panel/VBox/MicBtn" to="." method="_on_mic_pressed"]
