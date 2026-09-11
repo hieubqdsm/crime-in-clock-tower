@@ -9,6 +9,7 @@ signal disconnect_requested
 signal mic_toggle_requested
 signal mic_selected(index: int)
 signal talk_held(held: bool)   # UI push-to-talk (mouse hold on TalkBtn)
+signal talk_mode_changed(open_mic: bool)
 
 const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
                                              # resolve ::1 while the room
@@ -21,6 +22,9 @@ const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
 @onready var _mic_btn: Button = $Panel/VBox/MicBtn
 @onready var _mic_option: OptionButton = $Panel/VBox/MicOption
 @onready var _talk_btn: Button = $TalkBtn
+@onready var _mode_btn: Button = $Panel/VBox/TalkModeBtn
+
+var _open_mic := false
 @onready var _connect_btn: Button = $Panel/VBox/ConnectBtn
 @onready var _status: Label = $Panel/VBox/Status
 
@@ -82,6 +86,22 @@ func set_status(text: String, ok: bool) -> void:
 	_status.text = text
 	_status.add_theme_color_override("font_color",
 		Color(0.6, 1.0, 0.6) if ok else Color(1.0, 0.6, 0.5))
+
+
+func _on_talk_mode_pressed() -> void:
+	_open_mic = not _open_mic
+	_mode_btn.text = "📻 Chế độ nói: LUÔN BẬT" if _open_mic else "📻 Chế độ nói: GIỮ PHÍM"
+	talk_mode_changed.emit(_open_mic)
+
+
+func set_open_mic(v: bool) -> void:
+	_open_mic = v
+	_mode_btn.text = "📻 Chế độ nói: LUÔN BẬT" if _open_mic else "📻 Chế độ nói: GIỮ PHÍM"
+
+
+func set_transmitting(on: bool) -> void:
+	# live indicator on the big talk button (VAD / hold both count)
+	_talk_btn.text = "🎤 ĐANG NÓI…" if on else ("🎤 LIVE (nói tự động)" if _open_mic else "🎤 NÓI (giữ)")
 
 
 func _on_talk_down() -> void:

@@ -28,6 +28,7 @@ func _make_dbg_strip() -> void:
 
 func _ready() -> void:
 	_options.set_known_name(_net.player_name)
+	_load_talk_mode()
 	_make_dbg_strip()
 	_set_own_name(_net.player_name)
 	_net.state_changed.connect(_on_net_state)
@@ -40,9 +41,11 @@ func _ready() -> void:
 	_options.disconnect_requested.connect(_on_disconnect)
 	_options.mic_selected.connect(_on_mic_selected)
 	_options.talk_held.connect(_on_talk_held)
+	_options.talk_mode_changed.connect(_on_talk_mode)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_vad_hangover = maxf(0.0, _vad_hangover - delta)
 	if _net.connected:
 		var model := _player.get_node("Mannequin") as Node3D
 		var moving := Vector2(_player.velocity.x, _player.velocity.z).length() > 0.3
@@ -118,9 +121,40 @@ func _on_talk_held(held: bool) -> void:
 	_talk_held = held
 
 
+func _on_talk_mode(open_mic: bool) -> void:
+	_open_mic = open_mic
+	if OS.has_feature("web"):
+		JavaScriptBridge.eval("localStorage.setItem('cit_open_mic','%s')"
+			% ("1" if open_mic else "0"))
+	if open_mic and not _voice.is_enabled():
+		_on_mic_toggle()   # switching to open mode needs the mic anyway
+
+
+func _load_talk_mode() -> void:
+	var open_mic := false
+	if OS.has_feature("web"):
+		var v = JavaScriptBridge.eval("localStorage.getItem('cit_open_mic') || '0'")
+		open_mic = String(v) == "1"
+	_options.set_open_mic(open_mic)
+	_open_mic = open_mic
+
+
 func _on_voice_captured(pcm: PackedByteArray) -> void:
-	if _net.connected and (_talk_held or Input.is_physical_key_pressed(KEY_V)):
+	if not _net.connected:
+		return
+	var held := _talk_held or Input.is_physical_key_pressed(KEY_V)
+	var level: float = _voice.last_level
+	if held:
 		_net.send_voice(pcm)
+		_vad_hangover = 0.6
+	elif _open_mic and (level > 0.045 or _vad_hangover > 0.0):
+		_net.send_voice(pcm)
+		if level > 0.03:
+			_vad_hangover = 0.6
+	var transmitting := held or (_open_mic and (level > 0.045 or _vad_hangover > 0.0))
+	if transmitting != _transmitting:
+		_transmitting = transmitting
+		_options.set_transmitting(transmitting)
 
 
 func _on_voice_received(id: String, pcm: PackedByteArray) -> void:
@@ -132,6 +166,9 @@ func _on_voice_received(id: String, pcm: PackedByteArray) -> void:
 
 var _mic_ids: Array = []
 var _talk_held := false
+var _open_mic := false
+var _vad_hangover := 0.0
+var _transmitting := false
 
 
 func _on_mic_selected(index: int) -> void:

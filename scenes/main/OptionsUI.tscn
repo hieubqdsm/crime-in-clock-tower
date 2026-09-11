@@ -74,6 +74,10 @@ placeholder_text = "ws://127.0.0.1:8765"
 layout_mode = 2
 item_count = 0
 
+[node name="TalkModeBtn" type="Button" parent="Panel/VBox"]
+layout_mode = 2
+text = "📻 Chế độ nói: GIỮ PHÍM"
+
 [node name="MicBtn" type="Button" parent="Panel/VBox"]
 layout_mode = 2
 text = "🎤 Bật micro  (nói: giữ V)"
@@ -91,4 +95,5 @@ text = "chưa kết nối"
 [connection signal="button_down" from="TalkBtn" to="." method="_on_talk_down"]
 [connection signal="button_up" from="TalkBtn" to="." method="_on_talk_up"]
 [connection signal="pressed" from="Panel/VBox/MicBtn" to="." method="_on_mic_pressed"]
+[connection signal="pressed" from="Panel/VBox/TalkModeBtn" to="." method="_on_talk_mode_pressed"]
 [connection signal="item_selected" from="Panel/VBox/MicOption" to="." method="_on_mic_option_selected"]
