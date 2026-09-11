@@ -25,6 +25,7 @@ const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
 @onready var _mode_btn: Button = $Panel/VBox/TalkModeBtn
 
 var _open_mic := false
+var _transmitting := false
 @onready var _connect_btn: Button = $Panel/VBox/ConnectBtn
 @onready var _status: Label = $Panel/VBox/Status
 
@@ -97,11 +98,22 @@ func _on_talk_mode_pressed() -> void:
 func set_open_mic(v: bool) -> void:
 	_open_mic = v
 	_mode_btn.text = "📻 Chế độ nói: LUÔN BẬT" if _open_mic else "📻 Chế độ nói: GIỮ PHÍM"
+	_refresh_talk_btn()
+
+
+func _refresh_talk_btn() -> void:
+	if _transmitting:
+		_talk_btn.text = "🎤 ĐANG NÓI…"
+		_talk_btn.modulate = Color(0.5, 1.0, 0.5)
+	else:
+		_talk_btn.text = "🎤 LIVE (nói tự động)" if _open_mic else "🎤 NÓI (giữ V/nút)"
+		_talk_btn.modulate = Color(1.0, 0.85, 0.5) if _open_mic else Color.WHITE
 
 
 func set_transmitting(on: bool) -> void:
 	# live indicator on the big talk button (VAD / hold both count)
-	_talk_btn.text = "🎤 ĐANG NÓI…" if on else ("🎤 LIVE (nói tự động)" if _open_mic else "🎤 NÓI (giữ)")
+	_transmitting = on
+	_refresh_talk_btn()
 
 
 func _on_talk_down() -> void:
