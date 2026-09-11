@@ -39,6 +39,7 @@ func _ready() -> void:
 	_options.mic_toggle_requested.connect(_on_mic_toggle)
 	_options.disconnect_requested.connect(_on_disconnect)
 	_options.mic_selected.connect(_on_mic_selected)
+	_options.talk_held.connect(_on_talk_held)
 
 
 func _process(_delta: float) -> void:
@@ -113,8 +114,12 @@ func _on_player_state(id: String, pname: String, x: float, z: float, ry: float, 
 	(_remote_players[id].get_node("NameLabel") as Label3D).text = pname
 
 
+func _on_talk_held(held: bool) -> void:
+	_talk_held = held
+
+
 func _on_voice_captured(pcm: PackedByteArray) -> void:
-	if _net.connected and Input.is_physical_key_pressed(KEY_V):
+	if _net.connected and (_talk_held or Input.is_physical_key_pressed(KEY_V)):
 		_net.send_voice(pcm)
 
 
@@ -126,6 +131,7 @@ func _on_voice_received(id: String, pcm: PackedByteArray) -> void:
 
 
 var _mic_ids: Array = []
+var _talk_held := false
 
 
 func _on_mic_selected(index: int) -> void:

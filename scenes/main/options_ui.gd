@@ -8,6 +8,7 @@ signal connect_requested(url: String, player_name: String)
 signal disconnect_requested
 signal mic_toggle_requested
 signal mic_selected(index: int)
+signal talk_held(held: bool)   # UI push-to-talk (mouse hold on TalkBtn)
 
 const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
                                              # resolve ::1 while the room
@@ -19,6 +20,7 @@ const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
 @onready var _name_edit: LineEdit = $Panel/VBox/NameEdit
 @onready var _mic_btn: Button = $Panel/VBox/MicBtn
 @onready var _mic_option: OptionButton = $Panel/VBox/MicOption
+@onready var _talk_btn: Button = $TalkBtn
 @onready var _connect_btn: Button = $Panel/VBox/ConnectBtn
 @onready var _status: Label = $Panel/VBox/Status
 
@@ -80,6 +82,16 @@ func set_status(text: String, ok: bool) -> void:
 	_status.text = text
 	_status.add_theme_color_override("font_color",
 		Color(0.6, 1.0, 0.6) if ok else Color(1.0, 0.6, 0.5))
+
+
+func _on_talk_down() -> void:
+	_talk_btn.modulate = Color(0.5, 1.0, 0.5)
+	talk_held.emit(true)
+
+
+func _on_talk_up() -> void:
+	_talk_btn.modulate = Color.WHITE
+	talk_held.emit(false)
 
 
 func _on_gear_pressed() -> void:

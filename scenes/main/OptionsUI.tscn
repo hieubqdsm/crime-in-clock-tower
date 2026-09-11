@@ -18,6 +18,18 @@ offset_right = -16.0
 offset_bottom = 44.0
 text = "Cài đặt (O)"
 
+[node name="TalkBtn" type="Button" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -56.0
+offset_right = -16.0
+offset_bottom = -16.0
+text = "🎤 NÓI (giữ)"
+
 [node name="Panel" type="PanelContainer" parent="."]
 anchors_preset = 8
 anchor_left = 0.5
@@ -76,5 +88,7 @@ text = "chưa kết nối"
 
 [connection signal="pressed" from="Panel/VBox/ConnectBtn" to="." method="_on_connect_pressed"]
 [connection signal="pressed" from="GearBtn" to="." method="_on_gear_pressed"]
+[connection signal="button_down" from="TalkBtn" to="." method="_on_talk_down"]
+[connection signal="button_up" from="TalkBtn" to="." method="_on_talk_up"]
 [connection signal="pressed" from="Panel/VBox/MicBtn" to="." method="_on_mic_pressed"]
 [connection signal="item_selected" from="Panel/VBox/MicOption" to="." method="_on_mic_option_selected"]
