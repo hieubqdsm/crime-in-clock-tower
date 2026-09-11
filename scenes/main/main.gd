@@ -91,6 +91,7 @@ func _on_net_state(ok: bool, detail: String) -> void:
 	_options.set_connected(ok)
 	if not ok:
 		for id in _remote_players:
+			_remote_players[id].stop_voice()
 			_remote_players[id].queue_free()
 		_remote_players.clear()
 
@@ -103,7 +104,7 @@ func _on_player_state(id: String, pname: String, x: float, z: float, ry: float, 
 	if not _remote_players.has(id):
 		var rp := REMOTE_SCENE.instantiate()
 		rp.setup(pname)
-		rp.setup_voice()
+		rp.setup_voice(id)
 		_remotes.add_child(rp)
 		_remote_players[id] = rp
 	_remote_players[id].apply_state(x, z, ry, moving)
@@ -138,5 +139,6 @@ func _on_mic_toggle() -> void:
 
 func _on_player_left(id: String) -> void:
 	if _remote_players.has(id):
+		_remote_players[id].stop_voice()
 		_remote_players[id].queue_free()
 		_remote_players.erase(id)

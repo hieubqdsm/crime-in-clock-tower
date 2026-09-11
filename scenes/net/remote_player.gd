@@ -21,6 +21,7 @@ var _voice_player: AudioStreamPlayer
 var _voice_buf := PackedByteArray()
 var _voice_timer := 0.0
 var _speak_decay := 0.0
+var _net_id := ""
 
 var _target := Vector3.ZERO
 var _target_ry := 0.0
@@ -47,7 +48,8 @@ func apply_state(x: float, z: float, ry: float, moving: bool) -> void:
 		_anim.play(anim)
 
 
-func setup_voice() -> void:
+func setup_voice(net_id: String = "") -> void:
+	_net_id = net_id
 	# Playback = dynamic AudioStreamWAV swaps (see header note).
 	_voice_player = AudioStreamPlayer.new()
 	_voice_player.name = "Voice"
@@ -69,7 +71,18 @@ func receive_voice(pcm: PackedByteArray, listener_pos: Vector3) -> void:
 	for i in n:
 		var v := int(clampf(pcm.decode_s16(i * 2) / 32768.0 * gain, -1.0, 1.0) * 32767.0)
 		scaled.encode_s16(i * 2, v)
-	_voice_buf.append_array(scaled)
+	if OS.has_feature("web"):
+		# gapless WebAudio chain (see voice_capture._define_js_playback)
+		var b64: String = Marshalls.raw_to_base64(scaled)
+		JavaScriptBridge.eval("window.__citVoiceFeed('%s','%s',%f)"
+			% [_net_id, b64, gain], true)
+	else:
+		_voice_buf.append_array(scaled)
+
+
+func stop_voice() -> void:
+	if OS.has_feature("web") and not _net_id.is_empty():
+		JavaScriptBridge.eval("window.__citVoiceStop('%s')" % _net_id, true)
 
 
 func is_speaking() -> bool:
@@ -78,7 +91,7 @@ func is_speaking() -> bool:
 
 func _process(delta: float) -> void:
 	_voice_timer += delta
-	if _voice_timer >= SWAP_SEC and _voice_buf.size() > 0:
+	if not OS.has_feature("web") and _voice_timer >= SWAP_SEC and _voice_buf.size() > 0:
 		_voice_timer = 0.0
 		var wav := AudioStreamWAV.new()
 		wav.format = AudioStreamWAV.FORMAT_16_BITS

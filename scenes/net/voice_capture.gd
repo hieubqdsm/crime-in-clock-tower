@@ -194,6 +194,43 @@ func _enable_desktop() -> bool:
 	return true
 
 
+func _define_js_playback() -> void:
+	## Gapless per-remote voice playback in WebAudio: every chunk is
+	## scheduled to start exactly when the previous ends (jitter buffer =
+	## 80 ms lead) — the Discord-style pattern the WAV-swap approach lacks.
+	JavaScriptBridge.eval("""
+window.__citVoiceFeed = function(id, b64, gain) {
+  try {
+    if (!window.__citVCtx) window.__citVCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const ctx = window.__citVCtx;
+    if (ctx.state === 'suspended') ctx.resume();
+    let v = window.__citVoices && window.__citVoices[id];
+    if (!v) {
+      window.__citVoices = window.__citVoices || {};
+      const g = ctx.createGain(); g.gain.value = gain; g.connect(ctx.destination);
+      v = {gain: g, next: 0}; window.__citVoices[id] = v;
+    }
+    v.gain.gain.value = gain;
+    const bin = atob(b64);
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const pcm = new Int16Array(bytes.buffer);
+    const f32 = new Float32Array(pcm.length);
+    for (let i = 0; i < pcm.length; i++) f32[i] = pcm[i] / 32768.0;
+    const buf = ctx.createBuffer(1, f32.length, 16000);
+    buf.copyToChannel(f32, 0);
+    const src = ctx.createBufferSource();
+    src.buffer = buf; src.connect(v.gain);
+    const t = Math.max(ctx.currentTime + 0.08, v.next);
+    src.start(t);
+    v.next = t + buf.duration;
+  } catch (e) {}
+};
+window.__citVoiceStop = function(id) {
+  try { if (window.__citVoices && window.__citVoices[id]) { window.__citVoices[id].gain.disconnect(); delete window.__citVoices[id]; } } catch (e) {}
+};
+""")
+
 func _process(delta: float) -> void:
 	if not _enabled:
 		return
