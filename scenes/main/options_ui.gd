@@ -7,6 +7,7 @@ extends CanvasLayer
 signal connect_requested(url: String, player_name: String)
 signal disconnect_requested
 signal mic_toggle_requested
+signal mic_selected(index: int)
 
 const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
                                              # resolve ::1 while the room
@@ -17,6 +18,7 @@ const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
 @onready var _url_edit: LineEdit = $Panel/VBox/UrlEdit
 @onready var _name_edit: LineEdit = $Panel/VBox/NameEdit
 @onready var _mic_btn: Button = $Panel/VBox/MicBtn
+@onready var _mic_option: OptionButton = $Panel/VBox/MicOption
 @onready var _connect_btn: Button = $Panel/VBox/ConnectBtn
 @onready var _status: Label = $Panel/VBox/Status
 
@@ -56,6 +58,17 @@ func set_known_name(name: String) -> void:
 func set_connected(ok: bool) -> void:
 	_connected = ok
 	_connect_btn.text = "Ngắt kết nối" if ok else "Kết nối"
+
+
+func set_mic_devices(devs: Array) -> void:
+	# devs: [{id, label}] — repopulate without touching the signal wiring.
+	_mic_option.clear()
+	for d in devs:
+		_mic_option.add_item(String(d.get("label", "?")))
+
+
+func _on_mic_option_selected(index: int) -> void:
+	mic_selected.emit(index)
 
 
 func set_mic_status(ok: bool) -> void:

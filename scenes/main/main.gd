@@ -38,6 +38,7 @@ func _ready() -> void:
 	_options.connect_requested.connect(_on_connect_requested)
 	_options.mic_toggle_requested.connect(_on_mic_toggle)
 	_options.disconnect_requested.connect(_on_disconnect)
+	_options.mic_selected.connect(_on_mic_selected)
 
 
 func _process(_delta: float) -> void:
@@ -46,6 +47,10 @@ func _process(_delta: float) -> void:
 		var moving := Vector2(_player.velocity.x, _player.velocity.z).length() > 0.3
 		_net.set_own_state(_player.global_position.x, _player.global_position.z,
 			model.rotation.y, moving)
+	if Engine.get_process_frames() % 30 == 0:
+		var devs: Array = _voice.list_devices()
+		if not devs.is_empty():
+			_options.set_mic_devices(devs)
 	if Engine.get_process_frames() % 10 == 0:
 		var near_vol := -999.0
 		for t in get_tree().get_nodes_in_group("sound_tokens"):
@@ -115,6 +120,15 @@ func _on_voice_received(id: String, pcm: PackedByteArray) -> void:
 		var listener := get_viewport().get_audio_listener_3d()
 		var pos := listener.global_position if listener != null else Vector3.INF
 		_remote_players[id].receive_voice(pcm, pos)
+
+
+var _mic_ids: Array = []
+
+
+func _on_mic_selected(index: int) -> void:
+	var devs: Array = _voice.list_devices()
+	if index < devs.size():
+		_voice.select_device(String(devs[index].get("id", "")))
 
 
 func _on_mic_toggle() -> void:

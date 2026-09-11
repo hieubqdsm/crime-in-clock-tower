@@ -39,7 +39,13 @@ const JS_BOOT := """
       throw new Error('mediaDevices unavailable');
     const stream = await navigator.mediaDevices.getUserMedia({audio: {echoCancellation: true, noiseSuppression: true}});
     const track = stream.getAudioTracks()[0];
+    window.__micDeviceId = track && track.getSettings ? (track.getSettings().deviceId || null) : null;
     window.__micLabel = track && track.label ? track.label : 'default microphone';
+    try {
+      const devs = await navigator.mediaDevices.enumerateDevices();
+      window.__citMicList = devs.filter(d => d.kind === 'audioinput')
+        .map(d => ({id: d.deviceId, label: d.label || ('micro ' + String(d.deviceId).slice(0, 8))}));
+    } catch (e) { window.__citMicList = []; }
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     if (ctx.state === 'suspended') await ctx.resume();
     window.__micCtx = ctx;
@@ -59,11 +65,11 @@ const JS_BOOT := """
           const a = Math.floor(j * RATE_IN / RATE_OUT), b = Math.floor((j + 1) * RATE_IN / RATE_OUT);
           let s = 0, n = 0;
           for (let k = a; k < b; k++) { s += seg[k] || 0; n++; }
-          const v = n ? s / n : 0;
+          const v = (n ? s / n : 0) * (window.__citGain || 3.0);
           sq += v * v;
           pcm16[j] = Math.max(-32768, Math.min(32767, Math.round(v * 32767)));
         }
-        window.__micLevel = Math.sqrt(sq / CHUNK);
+        window.__micLevel = Math.min(1.0, Math.sqrt(sq / CHUNK));
         const bytes = new Uint8Array(pcm16.buffer);
         let bin = '';
         for (let q = 0; q < bytes.length; q++) bin += String.fromCharCode(bytes[q]);
@@ -80,6 +86,70 @@ const JS_BOOT := """
   }
 })()
 """
+
+
+func list_devices() -> Array:
+	## [{id, label}] on web after permission; [] before grant or on desktop.
+	if not OS.has_feature("web"):
+		return []
+	var raw = JavaScriptBridge.eval(
+		"(function(){ var l = window.__citMicList || []; return JSON.stringify(l); })()")
+	var arr = JSON.parse_string(String(raw)) if raw is String else []
+	return arr if arr is Array else []
+
+
+func select_device(device_id: String) -> void:
+	if not OS.has_feature("web"):
+		return
+	JavaScriptBridge.eval("(function(){ window.__citGain = 3.0; window.__citMicQueue = []; })()")
+	JavaScriptBridge.eval("""
+(async function(){
+  try {
+    if (window.__citMicStop) { try { window.__citMicStop(); } catch (e) {} }
+    const stream = await navigator.mediaDevices.getUserMedia({audio: {deviceId: {exact: '%s'}, echoCancellation: true, noiseSuppression: true}});
+    const track = stream.getAudioTracks()[0];
+    window.__micDeviceId = (track.getSettings ? track.getSettings().deviceId : null) || null;
+    window.__micLabel = track.label || 'selected micro';
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') await ctx.resume();
+    const src = ctx.createMediaStreamSource(stream);
+    const proc = ctx.createScriptProcessor(4096, 1, 1);
+    const RATE_IN = ctx.sampleRate, RATE_OUT = 16000, CHUNK = Math.floor(RATE_OUT * 0.1);
+    let carry = [];
+    proc.onaudioprocess = (e) => {
+      const d = e.inputBuffer.getChannelData(0);
+      for (let i = 0; i < d.length; i++) carry.push(d[i]);
+      const need = Math.floor(RATE_IN * 0.1);
+      while (carry.length >= need) {
+        const seg = carry.splice(0, need);
+        const pcm16 = new Int16Array(CHUNK);
+        let sq = 0;
+        for (let j = 0; j < CHUNK; j++) {
+          const a = Math.floor(j * RATE_IN / RATE_OUT), b = Math.floor((j + 1) * RATE_IN / RATE_OUT);
+          let s = 0, n = 0;
+          for (let k = a; k < b; k++) { s += seg[k] || 0; n++; }
+          const v = (n ? s / n : 0) * (window.__citGain || 3.0);
+          sq += v * v;
+          pcm16[j] = Math.max(-32768, Math.min(32767, Math.round(v * 32767)));
+        }
+        window.__micLevel = Math.min(1.0, Math.sqrt(sq / CHUNK));
+        const bytes = new Uint8Array(pcm16.buffer);
+        let bin = '';
+        for (let q = 0; q < bytes.length; q++) bin += String.fromCharCode(bytes[q]);
+        window.__citMicQueue.push(btoa(bin));
+        if (window.__citMicQueue.length > 20) window.__citMicQueue.shift();
+      }
+    };
+    const sink = ctx.createGain(); sink.gain.value = 0;
+    src.connect(proc); proc.connect(sink); sink.connect(ctx.destination);
+    window.__citMicStop = () => { try { proc.disconnect(); src.disconnect(); track.stop(); ctx.close(); } catch (e) {} };
+  } catch (err) {
+    window.__micError = String(err && err.name ? err.name + ': ' + err.message : err);
+  }
+})()
+""" % device_id, true)
+	device_name = ""
+	print("[mic] switching to device: ", device_id)
 
 
 func enable() -> bool:

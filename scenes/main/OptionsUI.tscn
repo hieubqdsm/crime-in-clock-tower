@@ -58,6 +58,10 @@ placeholder_text = "P-xxxx (tự động)"
 layout_mode = 2
 placeholder_text = "ws://127.0.0.1:8765"
 
+[node name="MicOption" type="OptionButton" parent="Panel/VBox"]
+layout_mode = 2
+item_count = 0
+
 [node name="MicBtn" type="Button" parent="Panel/VBox"]
 layout_mode = 2
 text = "🎤 Bật micro  (nói: giữ V)"
@@ -73,3 +77,4 @@ text = "chưa kết nối"
 [connection signal="pressed" from="Panel/VBox/ConnectBtn" to="." method="_on_connect_pressed"]
 [connection signal="pressed" from="GearBtn" to="." method="_on_gear_pressed"]
 [connection signal="pressed" from="Panel/VBox/MicBtn" to="." method="_on_mic_pressed"]
+[connection signal="item_selected" from="Panel/VBox/MicOption" to="." method="_on_mic_option_selected"]

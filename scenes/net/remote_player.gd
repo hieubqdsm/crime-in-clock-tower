@@ -9,13 +9,17 @@ const INTERP := 12.0
 ## full inside FULL_RADIUS, inverse-square beyond, silent past RANGE.
 const FULL_RADIUS := 4.0
 const RANGE := 15.0
-const MIX_RATE := 16000.0   # voice chunks are 16 kHz (see voice_capture.gd)
+## Chunks are 16 kHz mono PCM (voice_capture.gd). Playback swaps a dynamic
+## AudioStreamWAV every SWAP_SEC — the sample-based path the music tokens
+## PROVE is audible on every build; the generator path stayed silent on web.
+const SWAP_SEC := 0.3
 
 @onready var _anim: AnimationPlayer = $Mannequin/AnimationPlayer
 @onready var _label: Label3D = $NameLabel
 
 var _voice_player: AudioStreamPlayer
-var _voice_playback: AudioStreamGeneratorPlayback
+var _voice_buf := PackedByteArray()
+var _voice_timer := 0.0
 var _speak_decay := 0.0
 
 var _target := Vector3.ZERO
@@ -44,21 +48,15 @@ func apply_state(x: float, z: float, ry: float, moving: bool) -> void:
 
 
 func setup_voice() -> void:
-	# Per-remote generator stream; frames are pushed by receive_voice().
-	var stream := AudioStreamGenerator.new()
-	stream.mix_rate = int(MIX_RATE)
-	stream.buffer_length = 0.3
+	# Playback = dynamic AudioStreamWAV swaps (see header note).
 	_voice_player = AudioStreamPlayer.new()
 	_voice_player.name = "Voice"
-	_voice_player.stream = stream
 	_voice_player.bus = "Master"
 	add_child(_voice_player)
-	_voice_player.play()
-	_voice_playback = _voice_player.get_stream_playback()
 
 
 func receive_voice(pcm: PackedByteArray, listener_pos: Vector3) -> void:
-	if _voice_playback == null:
+	if _voice_player == null:
 		return
 	_speak_decay = 0.4   # keeps the speaking indicator lit between chunks
 	var d := global_position.distance_to(listener_pos)
@@ -66,12 +64,12 @@ func receive_voice(pcm: PackedByteArray, listener_pos: Vector3) -> void:
 		return
 	var gain := 1.0 if d <= FULL_RADIUS else (FULL_RADIUS / d) ** 2
 	var n := pcm.size() / 2
-	var frames := PackedVector2Array()
-	frames.resize(n)
+	var scaled := PackedByteArray()
+	scaled.resize(pcm.size())
 	for i in n:
-		var v := pcm.decode_s16(i * 2) / 32768.0 * gain
-		frames[i] = Vector2(v, v)
-	_voice_playback.push_buffer(frames)
+		var v := int(clampf(pcm.decode_s16(i * 2) / 32768.0 * gain, -1.0, 1.0) * 32767.0)
+		scaled.encode_s16(i * 2, v)
+	_voice_buf.append_array(scaled)
 
 
 func is_speaking() -> bool:
@@ -79,6 +77,17 @@ func is_speaking() -> bool:
 
 
 func _process(delta: float) -> void:
+	_voice_timer += delta
+	if _voice_timer >= SWAP_SEC and _voice_buf.size() > 0:
+		_voice_timer = 0.0
+		var wav := AudioStreamWAV.new()
+		wav.format = AudioStreamWAV.FORMAT_16_BITS
+		wav.stereo = false
+		wav.mix_rate = 16000
+		wav.data = _voice_buf
+		_voice_buf = PackedByteArray()
+		_voice_player.stream = wav
+		_voice_player.play()
 	_speak_decay = maxf(0.0, _speak_decay - delta)
 	_label.modulate = Color(0.55, 1.0, 0.55) if _speak_decay > 0.0 else Color.WHITE
 	if _seen:
