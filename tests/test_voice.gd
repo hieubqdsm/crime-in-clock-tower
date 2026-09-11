@@ -70,7 +70,7 @@ func _run() -> void:
 
 	# generator playback accepts the frames (RemotePlayer.receive_voice core)
 	var stream := AudioStreamGenerator.new()
-	stream.mix_rate = 48000
+	stream.mix_rate = 16000
 	stream.buffer_length = 0.3
 	var vp := AudioStreamPlayer.new()
 	vp.stream = stream

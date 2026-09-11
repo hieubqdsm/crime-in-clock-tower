@@ -9,7 +9,7 @@ const INTERP := 12.0
 ## full inside FULL_RADIUS, inverse-square beyond, silent past RANGE.
 const FULL_RADIUS := 4.0
 const RANGE := 15.0
-const MIX_RATE := 48000.0
+const MIX_RATE := 16000.0   # voice chunks are 16 kHz (see voice_capture.gd)
 
 @onready var _anim: AnimationPlayer = $Mannequin/AnimationPlayer
 @onready var _label: Label3D = $NameLabel
