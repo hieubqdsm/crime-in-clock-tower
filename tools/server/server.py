@@ -33,6 +33,11 @@ import websockets
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("PORT", 8765))
 TICK_HZ = 12
+VOICE_RANGE = 15.0   # match the client's hearing radius (remote_player.RANGE):
+                     # only relay a voice frame to receivers within this
+                     # distance of the SPEAKER (SFU-style selective forwarding
+                     # — breakout groups clustered in the room cost ~3 streams
+                     # per listener instead of N-1)
 
 # id -> {"ws", "name", "x", "z", "ry", "moving"}
 players: dict = {}
@@ -63,9 +68,15 @@ async def broadcast(message: str, exclude=None) -> None:
 
 async def broadcast_bytes(frame: bytes, exclude=None) -> None:
     dead = []
+    speaker = players.get(exclude) if exclude else None
     for pid, p in list(players.items()):
         if pid == exclude:
             continue
+        if speaker is not None:
+            dx = p["x"] - speaker["x"]
+            dz = p["z"] - speaker["z"]
+            if dx * dx + dz * dz > VOICE_RANGE * VOICE_RANGE:
+                continue   # out of earshot — SFU selective forwarding
         try:
             await p["ws"].send(frame)
         except websockets.ConnectionClosed:

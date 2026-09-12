@@ -18,6 +18,7 @@ import websockets
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 20
 SPEAKERS = int(sys.argv[3]) if len(sys.argv) > 3 else N
+LAYOUT = sys.argv[4] if len(sys.argv) > 4 else "packed"   # packed | groups
 URL = sys.argv[2] if len(sys.argv) > 2 else "wss://wishing-others-regulation-home.trycloudflare.com"
 STATE_HZ = 12.0
 VOICE_HZ = 10.0
@@ -71,10 +72,20 @@ async def player(idx: int):
                 cycle += 1
                 await asyncio.sleep(1.0 / VOICE_HZ)
 
+        def pos():
+            # packed: everyone inside a 10 m huddle (all hear all).
+            # groups: 5 clusters of 4 around the room (breakout discussion).
+            if LAYOUT == "groups":
+                # 4 corner clusters (>=20 m apart, > VOICE_RANGE) of 5 each
+                gx = [-10, 10, -10, 10][idx % 4]
+                gz = [-10, -10, 10, 10][idx % 4]
+                return gx + (idx // 4 - 2) * 0.9, gz + ((idx // 4) % 2 - 0.5) * 1.5
+            return 10 * math.sin(idx), 10 * math.cos(idx)
+
         async def stater():
             t_end = time.time() + DURATION
             while time.time() < t_end:
-                x = 10 * math.sin(idx); z = 10 * math.cos(idx)
+                x, z = pos()
                 await ws.send(json.dumps({"t": "state", "x": x, "z": z, "ry": 0, "moving": True}))
                 await asyncio.sleep(1.0 / STATE_HZ)
 
@@ -114,7 +125,9 @@ async def main():
     if stats["errors"]:
         print("errors           : %s" % stats["errors"][:5])
     print("world frames rcv : %d  (%.1f/s overall)" % (stats["world_recv"], stats["world_recv"] / dt))
-    exp_voice = stats["voice_sent"] * max(0, N - 1)  # every frame goes to all OTHER players
+    # expected receivers per frame: all others when packed; own group when clustered
+    per_frame = (N - 1) if LAYOUT != "groups" else max(0, (N + 3) // 4 - 1)
+    exp_voice = stats["voice_sent"] * per_frame
     got = stats["voice_recv"]
     print("voice sent       : %d chunks (%.0f KB/s up total)" % (
         stats["voice_sent"], stats["voice_sent"] * 3216 / 1024 / DURATION))
