@@ -28,7 +28,7 @@ offset_left = -150.0
 offset_top = -56.0
 offset_right = -16.0
 offset_bottom = -16.0
-text = "🎤 NÓI (giữ)"
+text = "NÓI (giữ V / nút)"
 
 [node name="Panel" type="PanelContainer" parent="."]
 anchors_preset = 8
@@ -76,11 +76,11 @@ item_count = 0
 
 [node name="TalkModeBtn" type="Button" parent="Panel/VBox"]
 layout_mode = 2
-text = "📻 Chế độ nói: GIỮ PHÍM"
+text = "Chế độ nói: GIỮ PHÍM"
 
 [node name="MicBtn" type="Button" parent="Panel/VBox"]
 layout_mode = 2
-text = "🎤 Bật micro  (nói: giữ V)"
+text = "Bật micro"
 
 [node name="ConnectBtn" type="Button" parent="Panel/VBox"]
 layout_mode = 2

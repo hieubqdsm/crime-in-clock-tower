@@ -61,7 +61,7 @@ func _process(delta: float) -> void:
 			if t.has_method("volume_db"):
 				near_vol = maxf(near_vol, t.volume_db())
 		if _dbg != null:
-			_dbg.text = "🎤 %d%%  ↑%d ↓%d  ♪ %+.0f dB" % [
+			_dbg.text = "Mic %d%%  guii %d  nhan %d  token %+.0f dB" % [
 				int(_voice.last_level * 100.0) if _voice != null else 0,
 				_net.voice_sent, _net.voice_recv, near_vol]
 	if OS.has_feature("web") and Engine.get_process_frames() % 10 == 0:

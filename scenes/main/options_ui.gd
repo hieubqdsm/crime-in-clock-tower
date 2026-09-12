@@ -79,7 +79,7 @@ func _on_mic_option_selected(index: int) -> void:
 
 
 func set_mic_status(ok: bool) -> void:
-	_mic_btn.text = "🎤 Micro: ĐANG BẬT" if ok else "🎤 Bật micro  (nói: giữ V)"
+	_mic_btn.text = "Micro: ĐANG BẬT" if ok else "Bật micro"
 	_mic_btn.disabled = false
 
 
@@ -91,22 +91,22 @@ func set_status(text: String, ok: bool) -> void:
 
 func _on_talk_mode_pressed() -> void:
 	_open_mic = not _open_mic
-	_mode_btn.text = "📻 Chế độ nói: LUÔN BẬT" if _open_mic else "📻 Chế độ nói: GIỮ PHÍM"
+	_mode_btn.text = "Chế độ nói: LUÔN BẬT" if _open_mic else "Chế độ nói: GIỮ PHÍM"
 	talk_mode_changed.emit(_open_mic)
 
 
 func set_open_mic(v: bool) -> void:
 	_open_mic = v
-	_mode_btn.text = "📻 Chế độ nói: LUÔN BẬT" if _open_mic else "📻 Chế độ nói: GIỮ PHÍM"
+	_mode_btn.text = "Chế độ nói: LUÔN BẬT" if _open_mic else "Chế độ nói: GIỮ PHÍM"
 	_refresh_talk_btn()
 
 
 func _refresh_talk_btn() -> void:
 	if _transmitting:
-		_talk_btn.text = "🎤 ĐANG NÓI…"
+		_talk_btn.text = ">> ĐANG NÓI <<"
 		_talk_btn.modulate = Color(0.5, 1.0, 0.5)
 	else:
-		_talk_btn.text = "🎤 LIVE (nói tự động)" if _open_mic else "🎤 NÓI (giữ V/nút)"
+		_talk_btn.text = "LIVE — nói tự động" if _open_mic else "NÓI (giữ V / nút)"
 		_talk_btn.modulate = Color(1.0, 0.85, 0.5) if _open_mic else Color.WHITE
 
 
@@ -132,7 +132,7 @@ func _on_gear_pressed() -> void:
 
 func _on_mic_pressed() -> void:
 	_mic_btn.disabled = true
-	_mic_btn.text = "đang xin quyền micro…"
+	_mic_btn.text = "đang xin quyền micro..."
 	mic_toggle_requested.emit()
 
 
