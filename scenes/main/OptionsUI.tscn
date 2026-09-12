@@ -18,6 +18,18 @@ offset_right = -16.0
 offset_bottom = 44.0
 text = "Cài đặt (O)"
 
+[node name="AlwaysCheck" type="CheckButton" parent="."]
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -98.0
+offset_right = -16.0
+offset_bottom = -62.0
+text = "Tự nói (always-on)"
+
 [node name="TalkBtn" type="Button" parent="."]
 anchors_preset = 3
 anchor_left = 1.0
@@ -94,6 +106,7 @@ text = "chưa kết nối"
 [connection signal="pressed" from="GearBtn" to="." method="_on_gear_pressed"]
 [connection signal="button_down" from="TalkBtn" to="." method="_on_talk_down"]
 [connection signal="button_up" from="TalkBtn" to="." method="_on_talk_up"]
+[connection signal="toggled" from="AlwaysCheck" to="." method="_on_always_toggled"]
 [connection signal="pressed" from="Panel/VBox/MicBtn" to="." method="_on_mic_pressed"]
 [connection signal="pressed" from="Panel/VBox/TalkModeBtn" to="." method="_on_talk_mode_pressed"]
 [connection signal="item_selected" from="Panel/VBox/MicOption" to="." method="_on_mic_option_selected"]

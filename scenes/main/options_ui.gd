@@ -22,6 +22,7 @@ const DEFAULT_URL := "ws://127.0.0.1:8765"   # not localhost: webviews may
 @onready var _mic_btn: Button = $Panel/VBox/MicBtn
 @onready var _mic_option: OptionButton = $Panel/VBox/MicOption
 @onready var _talk_btn: Button = $TalkBtn
+@onready var _always_check: CheckButton = $AlwaysCheck
 @onready var _mode_btn: Button = $Panel/VBox/TalkModeBtn
 
 var _open_mic := false
@@ -90,7 +91,15 @@ func set_status(text: String, ok: bool) -> void:
 
 
 func _on_talk_mode_pressed() -> void:
-	_open_mic = not _open_mic
+	_set_open_mic_and_emit(not _open_mic)
+
+
+func _on_always_toggled(pressed: bool) -> void:
+	_set_open_mic_and_emit(pressed)
+
+
+func _set_open_mic_and_emit(v: bool) -> void:
+	_open_mic = v
 	_mode_btn.text = "Chế độ nói: LUÔN BẬT" if _open_mic else "Chế độ nói: GIỮ PHÍM"
 	talk_mode_changed.emit(_open_mic)
 
@@ -98,6 +107,7 @@ func _on_talk_mode_pressed() -> void:
 func set_open_mic(v: bool) -> void:
 	_open_mic = v
 	_mode_btn.text = "Chế độ nói: LUÔN BẬT" if _open_mic else "Chế độ nói: GIỮ PHÍM"
+	_always_check.set_pressed_no_signal(v)
 	_refresh_talk_btn()
 
 
